@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Layout } from "@/components/Layout";
 
 export const Route = createFileRoute("/privacy")({
-  head: () => ({ meta: [{ title: "Privacy Policy — StepStyle Pakistan" }] }),
+  head: () => ({ meta: [{ title: "Privacy Policy - StepStyle Pakistan" }] }),
   component: () => (
     <Layout>
       <div className="mx-auto max-w-2xl px-4 py-10">

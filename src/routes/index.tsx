@@ -101,14 +101,14 @@ function HomePage() {
 
       {/* How to Order */}
       <section className="mx-auto max-w-7xl px-4 py-14">
-        <SectionTitle title="How to Order" subtitle="Ordering is very easy — just 3 simple steps" />
+        <SectionTitle title="How to Order" subtitle="Ordering is very easy - just 3 simple steps" />
         <div className="grid gap-6 md:grid-cols-3">
           <Step n={1} title="Choose Your Shoes" text="Select the shoe and your size." />
           <Step n={2} title="Enter Your Details" text="Enter your name, phone number, and address." />
           <Step n={3} title="Pay on Delivery" text="Pay cash when your order arrives at your door." />
         </div>
         <div className="mt-6 rounded-2xl bg-success/10 p-4 text-center text-sm font-semibold text-success sm:text-base">
-          💵 No Online Payment Required — آن لائن پیمنٹ کی ضرورت نہیں
+          💵 No Online Payment Required - آن لائن پیمنٹ کی ضرورت نہیں
         </div>
       </section>
 
@@ -138,7 +138,7 @@ function HomePage() {
               </div>
               <p className="text-sm text-foreground">{r.text}</p>
               <div className="mt-3 text-xs font-semibold text-muted-foreground">
-                — {r.name}, {r.city}
+                - {r.name}, {r.city}
               </div>
             </div>
           ))}

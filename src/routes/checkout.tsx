@@ -9,7 +9,7 @@ import { validatePakistaniPhone, normalizePhone } from "@/lib/validation";
 import { Lock, Phone, ShieldCheck, Wallet, X } from "lucide-react";
 
 export const Route = createFileRoute("/checkout")({
-  head: () => ({ meta: [{ title: "Checkout — StepStyle Pakistan" }] }),
+  head: () => ({ meta: [{ title: "Checkout - StepStyle Pakistan" }] }),
   component: CheckoutPage,
 });
 

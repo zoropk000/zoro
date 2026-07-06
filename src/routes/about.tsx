@@ -3,7 +3,7 @@ import { Layout } from "@/components/Layout";
 import { siteConfig } from "@/config/siteConfig";
 
 export const Route = createFileRoute("/about")({
-  head: () => ({ meta: [{ title: "About Us — StepStyle Pakistan" }] }),
+  head: () => ({ meta: [{ title: "About Us - StepStyle Pakistan" }] }),
   component: () => (
     <Layout>
       <div className="mx-auto max-w-3xl px-4 py-10">
@@ -14,7 +14,7 @@ export const Route = createFileRoute("/about")({
           can shop with confidence.
         </p>
         <p className="mb-4 text-muted-foreground">
-          Our mission is to make online shoe shopping simple and trustworthy — even for
+          Our mission is to make online shoe shopping simple and trustworthy - even for
           first-time online shoppers. No account is needed. Just choose your shoes, enter
           your details, and pay cash when your order arrives.
         </p>

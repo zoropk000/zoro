@@ -3,7 +3,7 @@ import { Layout } from "@/components/Layout";
 import { siteConfig } from "@/config/siteConfig";
 
 export const Route = createFileRoute("/returns")({
-  head: () => ({ meta: [{ title: "Returns & Exchange — StepStyle Pakistan" }] }),
+  head: () => ({ meta: [{ title: "Returns & Exchange - StepStyle Pakistan" }] }),
   component: () => (
     <Layout>
       <div className="mx-auto max-w-2xl px-4 py-10">

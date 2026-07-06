@@ -4,7 +4,7 @@ import { siteConfig } from "@/config/siteConfig";
 import { Mail, MessageCircle, Phone } from "lucide-react";
 
 export const Route = createFileRoute("/contact")({
-  head: () => ({ meta: [{ title: "Contact Us — StepStyle Pakistan" }] }),
+  head: () => ({ meta: [{ title: "Contact Us - StepStyle Pakistan" }] }),
   component: () => (
     <Layout>
       <div className="mx-auto max-w-2xl px-4 py-10">

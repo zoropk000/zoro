@@ -26,7 +26,7 @@ export const Route = createFileRoute("/product/$slug")({
   },
   head: ({ loaderData }) => ({
     meta: [
-      { title: loaderData ? `${loaderData.product.name} — StepStyle Pakistan` : "Product" },
+      { title: loaderData ? `${loaderData.product.name} - StepStyle Pakistan` : "Product" },
       { name: "description", content: loaderData?.product.shortDescription ?? "" },
       { property: "og:image", content: loaderData?.product.images[0] ?? "" },
     ],
@@ -195,14 +195,14 @@ function ProductPage() {
             </a>
 
             <div className="mt-6 grid gap-2 rounded-2xl border border-border bg-secondary/40 p-4 text-sm">
-              <Line icon={<Wallet className="h-4 w-4 text-success" />} text="Cash on Delivery — Pay when your order arrives" />
+              <Line icon={<Wallet className="h-4 w-4 text-success" />} text="Cash on Delivery - Pay when your order arrives" />
               <Line icon={<Truck className="h-4 w-4 text-primary" />} text="Delivery Across Pakistan" />
               <Line icon={<RefreshCw className="h-4 w-4 text-primary" />} text="Easy Size Exchange" />
             </div>
 
             <div className="mt-3 rounded-xl bg-success/10 p-3 text-center text-sm font-semibold text-success">
               💵 No Online Payment Required
-              <div className="mt-1 text-xs font-normal">آن لائن پیمنٹ کی ضرورت نہیں — جوتے ملنے پر پیسے دیں</div>
+              <div className="mt-1 text-xs font-normal">آن لائن پیمنٹ کی ضرورت نہیں - جوتے ملنے پر پیسے دیں</div>
             </div>
 
             {/* Accordions */}

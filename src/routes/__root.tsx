@@ -84,13 +84,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "StepStyle Pakistan — Comfortable Shoes, Cash on Delivery" },
+      { title: "StepStyle Pakistan - Comfortable Shoes, Cash on Delivery" },
       {
         name: "description",
         content:
           "Buy quality shoes online in Pakistan. Cash on Delivery, easy size exchange, delivery all over Pakistan.",
       },
-      { property: "og:title", content: "StepStyle Pakistan — Shoes with Cash on Delivery" },
+      { property: "og:title", content: "StepStyle Pakistan - Shoes with Cash on Delivery" },
       {
         property: "og:description",
         content: "Comfortable shoes delivered anywhere in Pakistan. Pay cash when your order arrives.",
@@ -113,7 +113,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap",
       },
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/logo.png", type: "image/x-icon" },
     ],
   }),
   shellComponent: RootShell,

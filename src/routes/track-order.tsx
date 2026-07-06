@@ -6,7 +6,7 @@ import { formatPKR } from "@/lib/currency";
 import { Check, Circle, Package } from "lucide-react";
 
 export const Route = createFileRoute("/track-order")({
-  head: () => ({ meta: [{ title: "Track Your Order — StepStyle Pakistan" }] }),
+  head: () => ({ meta: [{ title: "Track Your Order - StepStyle Pakistan" }] }),
   component: TrackPage,
 });
 

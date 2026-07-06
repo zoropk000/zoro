@@ -6,7 +6,7 @@ import { calcDeliveryFee } from "@/lib/orders";
 import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/cart")({
-  head: () => ({ meta: [{ title: "Your Cart — StepStyle Pakistan" }] }),
+  head: () => ({ meta: [{ title: "Your Cart - StepStyle Pakistan" }] }),
   component: CartPage,
 });
 

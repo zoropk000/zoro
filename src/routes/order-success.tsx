@@ -10,7 +10,7 @@ import { CheckCircle2, MessageCircle } from "lucide-react";
 const searchSchema = z.object({ order: z.string().optional() });
 
 export const Route = createFileRoute("/order-success")({
-  head: () => ({ meta: [{ title: "Order Placed — StepStyle Pakistan" }] }),
+  head: () => ({ meta: [{ title: "Order Placed - StepStyle Pakistan" }] }),
   validateSearch: searchSchema,
   component: SuccessPage,
 });

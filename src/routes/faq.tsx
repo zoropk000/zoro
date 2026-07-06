@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Layout } from "@/components/Layout";
 
 export const Route = createFileRoute("/faq")({
-  head: () => ({ meta: [{ title: "FAQ — StepStyle Pakistan" }] }),
+  head: () => ({ meta: [{ title: "FAQ - StepStyle Pakistan" }] }),
   component: FAQPage,
 });
 
