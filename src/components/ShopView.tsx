@@ -10,8 +10,8 @@ type Sort = "popular" | "newest" | "price-asc" | "price-desc";
 const ALL_SIZES = [36, 37, 38, 39, 40, 41, 42, 43, 44, 45];
 const PRICE_RANGES = [
   { label: "Under Rs. 3,000", min: 0, max: 3000 },
-  { label: "Rs. 3,000 – 5,000", min: 3000, max: 5000 },
-  { label: "Rs. 5,000 – 8,000", min: 5000, max: 8000 },
+  { label: "Rs. 3,000 - 5,000", min: 3000, max: 5000 },
+  { label: "Rs. 5,000 - 8,000", min: 5000, max: 8000 },
   { label: "Above Rs. 8,000", min: 8000, max: Infinity },
 ];
 
@@ -91,11 +91,10 @@ export function ShopView({ initialCategory = "All", saleOnly = false, title, sub
             <button
               key={c}
               onClick={() => setCategory(c)}
-              className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-                category === c
+              className={`rounded-full border px-4 py-2 text-sm font-medium transition ${category === c
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-border bg-background text-foreground hover:bg-secondary"
-              }`}
+                }`}
             >
               {c}
             </button>
@@ -108,11 +107,10 @@ export function ShopView({ initialCategory = "All", saleOnly = false, title, sub
             <button
               key={s}
               onClick={() => toggleSize(s)}
-              className={`h-11 w-11 rounded-lg border text-sm font-semibold transition ${
-                sizes.includes(s)
+              className={`h-11 w-11 rounded-lg border text-sm font-semibold transition ${sizes.includes(s)
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-border bg-background hover:bg-secondary"
-              }`}
+                }`}
             >
               {s}
             </button>
@@ -125,11 +123,10 @@ export function ShopView({ initialCategory = "All", saleOnly = false, title, sub
             <button
               key={r.label}
               onClick={() => setPriceIdx(priceIdx === i ? null : i)}
-              className={`rounded-lg border px-3 py-2.5 text-left text-sm font-medium transition ${
-                priceIdx === i
+              className={`rounded-lg border px-3 py-2.5 text-left text-sm font-medium transition ${priceIdx === i
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-border bg-background hover:bg-secondary"
-              }`}
+                }`}
             >
               {r.label}
             </button>

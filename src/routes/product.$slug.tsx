@@ -104,9 +104,8 @@ function ProductPage() {
                   <button
                     key={i}
                     onClick={() => setImgIdx(i)}
-                    className={`h-20 w-20 overflow-hidden rounded-lg border-2 ${
-                      imgIdx === i ? "border-primary" : "border-transparent"
-                    }`}
+                    className={`h-20 w-20 overflow-hidden rounded-lg border-2 ${imgIdx === i ? "border-primary" : "border-transparent"
+                      }`}
                   >
                     <img src={img} alt="" className="h-full w-full object-cover" />
                   </button>
@@ -154,11 +153,10 @@ function ProductPage() {
                   <button
                     key={s}
                     onClick={() => setSize(s)}
-                    className={`h-12 min-w-12 rounded-lg border-2 px-3 text-base font-semibold transition ${
-                      size === s
+                    className={`h-12 min-w-12 rounded-lg border-2 px-3 text-base font-semibold transition ${size === s
                         ? "border-primary bg-primary text-primary-foreground"
                         : "border-border bg-background hover:bg-secondary"
-                    }`}
+                      }`}
                   >
                     {s}
                   </button>
@@ -208,20 +206,28 @@ function ProductPage() {
             {/* Accordions */}
             <div className="mt-6 divide-y divide-border rounded-2xl border border-border">
               {[
-                { key: "details", label: "Product Details", body: (
-                  <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
-                    {product.description.map((d: string, i: number) => (<li key={i}>{d}</li>))}
-                  </ul>
-                )},
-                { key: "size", label: "Size Information", body: (
-                  <p className="text-sm text-muted-foreground">Available sizes: {product.sizes.join(", ")}. Use the size guide to find your fit.</p>
-                )},
-                { key: "delivery", label: "Delivery Information", body: (
-                  <p className="text-sm text-muted-foreground">Major cities: 2–4 working days. Other cities: 3–7 working days. Delivery fee Rs. {siteConfig.deliveryFee}. Free delivery over Rs. {siteConfig.freeDeliveryThreshold}.</p>
-                )},
-                { key: "exchange", label: "Exchange Policy", body: (
-                  <p className="text-sm text-muted-foreground">Wrong size? Contact us on WhatsApp with your order number. We will guide you through the exchange process.</p>
-                )},
+                {
+                  key: "details", label: "Product Details", body: (
+                    <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
+                      {product.description.map((d: string, i: number) => (<li key={i}>{d}</li>))}
+                    </ul>
+                  )
+                },
+                {
+                  key: "size", label: "Size Information", body: (
+                    <p className="text-sm text-muted-foreground">Available sizes: {product.sizes.join(", ")}. Use the size guide to find your fit.</p>
+                  )
+                },
+                {
+                  key: "delivery", label: "Delivery Information", body: (
+                    <p className="text-sm text-muted-foreground">Major cities: 2-4 working days. Other cities: 3-7 working days. Delivery fee Rs. {siteConfig.deliveryFee}. Free delivery over Rs. {siteConfig.freeDeliveryThreshold}.</p>
+                  )
+                },
+                {
+                  key: "exchange", label: "Exchange Policy", body: (
+                    <p className="text-sm text-muted-foreground">Wrong size? Contact us on WhatsApp with your order number. We will guide you through the exchange process.</p>
+                  )
+                },
               ].map((row) => (
                 <div key={row.key}>
                   <button

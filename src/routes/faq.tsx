@@ -11,7 +11,7 @@ const FAQS = [
   { q: "How can I place an order?", a: "Choose a shoe, select your size, enter your name, phone number, and address, then click Place Order. No account is needed." },
   { q: "Is Cash on Delivery available?", a: "Yes. You pay cash when your order arrives. No online payment is required." },
   { q: "Do I need an account?", a: "No. You can place an order without creating any account." },
-  { q: "How long does delivery take?", a: "Major cities: 2–4 working days. Other cities: 3–7 working days." },
+  { q: "How long does delivery take?", a: "Major cities: 2-4 working days. Other cities: 3-7 working days." },
   { q: "How do I choose my shoe size?", a: "Use our Simple Size Guide. Measure your foot in cm and match it to the size chart. You can also message us on WhatsApp for help." },
   { q: "What happens if the size does not fit?", a: "Contact us with your order number. We will guide you through the size exchange process." },
   { q: "Can I exchange my shoes?", a: "Yes, for size issues. The shoes must be unused and in original condition." },

@@ -14,8 +14,8 @@ export const Route = createFileRoute("/delivery")({
         </div>
         <div>
           <h2 className="text-xl font-bold">Delivery Time</h2>
-          <p className="text-muted-foreground">Major Cities: 2–4 working days</p>
-          <p className="text-muted-foreground">Other Cities: 3–7 working days</p>
+          <p className="text-muted-foreground">Major Cities: 2-4 working days</p>
+          <p className="text-muted-foreground">Other Cities: 3-7 working days</p>
         </div>
         <div>
           <h2 className="text-xl font-bold">Payment</h2>
