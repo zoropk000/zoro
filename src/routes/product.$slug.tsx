@@ -100,7 +100,7 @@ function ProductPage() {
             </div>
             {product.images.length > 1 && (
               <div className="mt-3 flex gap-2">
-                {product.images.map((img, i) => (
+                {product.images.map((img: string, i: number) => (
                   <button
                     key={i}
                     onClick={() => setImgIdx(i)}
@@ -150,7 +150,7 @@ function ProductPage() {
                 </button>
               </div>
               <div className="flex flex-wrap gap-2">
-                {product.sizes.map((s) => (
+                {product.sizes.map((s: number) => (
                   <button
                     key={s}
                     onClick={() => setSize(s)}
@@ -210,7 +210,7 @@ function ProductPage() {
               {[
                 { key: "details", label: "Product Details", body: (
                   <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
-                    {product.description.map((d, i) => (<li key={i}>{d}</li>))}
+                    {product.description.map((d: string, i: number) => (<li key={i}>{d}</li>))}
                   </ul>
                 )},
                 { key: "size", label: "Size Information", body: (
