@@ -8,4 +8,6 @@ export const siteConfig = {
   freeDeliveryThreshold: 8000,
   currency: "PKR",
   address: "Karachi, Pakistan",
+  instagram: "https://instagram.com/stepstyle.pk",
+  facebook: "https://facebook.com/stepstyle.pk",
 };
