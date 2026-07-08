@@ -1,13 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { Menu, Search, ShoppingCart, X, Globe } from "lucide-react";
-import { useState } from "react";
+import { Search, ShoppingCart, Globe } from "lucide-react";
 import { siteConfig } from "@/config/siteConfig";
 import { useCart } from "@/lib/cart-context";
 import { useLanguage } from "@/lib/language-context";
 
 export function Header() {
   const { count } = useCart();
-  const [menuOpen, setMenuOpen] = useState(false);
+
   const { t, lang, setLang } = useLanguage();
 
   const nav = [
@@ -33,14 +32,6 @@ export function Header() {
 
       <header className="sticky top-0 z-40 w-full border-b border-border bg-background">
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:py-4">
-          <button
-            className="rounded-md p-2 md:hidden"
-            aria-label="Open menu"
-            onClick={() => setMenuOpen(true)}
-          >
-            <Menu className="h-6 w-6" />
-          </button>
-
           <Link to="/" className="flex items-center gap-2">
             <span className="text-lg font-extrabold tracking-tight text-primary sm:text-xl">
               <img src="/logo1.png" alt="StepStyle Pakistan" className="h-16 w-auto object-contain" />
@@ -70,14 +61,15 @@ export function Header() {
               {t("searchPlaceholder")}
             </Link>
 
-            {/* Language Toggle (desktop) */}
+            {/* Language Toggle */}
             <button
               onClick={toggleLang}
-              className="hidden md:flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-semibold text-foreground hover:bg-secondary transition"
+              className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-semibold text-foreground hover:bg-secondary transition"
               aria-label="Toggle language"
             >
               <Globe className="h-4 w-4 text-primary" />
-              {t("langToggle")}
+              <span className="hidden sm:inline">{t("langToggle")}</span>
+              <span className="sm:hidden">{lang === "en" ? "EN" : "UR"}</span>
             </button>
 
             {/* Cart */}
@@ -108,73 +100,6 @@ export function Header() {
         </div>
       </header>
 
-      {/* Mobile Menu */}
-      {menuOpen && (
-        <div className="fixed inset-0 z-50 bg-background md:hidden">
-          <div className="flex items-center justify-between border-b border-border px-4 py-4">
-            <span className="text-lg font-extrabold text-primary">
-              <img src="/logo1.png" alt="StepStyle Pakistan" className="h-14 w-auto object-contain" />
-            </span>
-            <button
-              onClick={() => setMenuOpen(false)}
-              className="rounded-md p-2"
-              aria-label="Close menu"
-            >
-              <X className="h-6 w-6" />
-            </button>
-          </div>
-          <nav className="flex flex-col p-4">
-            {nav.map((n) => (
-              <Link
-                key={n.to}
-                to={n.to}
-                onClick={() => setMenuOpen(false)}
-                className="rounded-lg px-4 py-4 text-lg font-semibold text-foreground hover:bg-secondary"
-              >
-                {n.label}
-              </Link>
-            ))}
-            <hr className="my-2 border-border" />
-            <Link
-              to="/track-order"
-              onClick={() => setMenuOpen(false)}
-              className="rounded-lg px-4 py-4 text-lg text-foreground hover:bg-secondary"
-            >
-              {t("trackOrder")}
-            </Link>
-            <Link
-              to="/size-guide"
-              onClick={() => setMenuOpen(false)}
-              className="rounded-lg px-4 py-4 text-lg text-foreground hover:bg-secondary"
-            >
-              {t("sizeGuide")}
-            </Link>
-            <Link
-              to="/contact"
-              onClick={() => setMenuOpen(false)}
-              className="rounded-lg px-4 py-4 text-lg text-foreground hover:bg-secondary"
-            >
-              {t("contactUs")}
-            </Link>
-            <Link
-              to="/faq"
-              onClick={() => setMenuOpen(false)}
-              className="rounded-lg px-4 py-4 text-lg text-foreground hover:bg-secondary"
-            >
-              {t("faq")}
-            </Link>
-            <hr className="my-2 border-border" />
-            {/* Language toggle inside mobile menu */}
-            <button
-              onClick={() => { toggleLang(); setMenuOpen(false); }}
-              className="flex items-center gap-2 rounded-lg px-4 py-4 text-lg font-semibold text-primary hover:bg-secondary"
-            >
-              <Globe className="h-5 w-5" />
-              {t("langToggle")}
-            </button>
-          </nav>
-        </div>
-      )}
     </>
   );
 }
