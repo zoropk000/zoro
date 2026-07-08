@@ -13,30 +13,37 @@ import { Toaster } from "sonner";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { CartProvider } from "@/lib/cart-context";
+import { LanguageProvider, useLanguage } from "@/lib/language-context";
 
 function NotFoundComponent() {
+  const { t, lang } = useLanguage();
+  const isUrdu = lang === "ur";
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-2xl font-semibold text-foreground">
-          Oops! We Could Not Find This Page
+      <div className={`max-w-md ${isUrdu ? "text-right" : "text-center"}`}>
+        <h1 className="text-7xl font-bold text-foreground" dir="ltr">404</h1>
+        <h2
+          className={`mt-4 font-semibold text-foreground ${
+            isUrdu ? "text-xl sm:text-2xl leading-[1.8]" : "text-2xl"
+          }`}
+        >
+          {t("notFoundTitle")}
         </h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The page may have moved or the link may be incorrect.
-        </p>
-        <div className="mt-6 flex flex-wrap justify-center gap-2">
+        <p className="mt-2 text-sm text-muted-foreground">{t("notFoundText")}</p>
+        <div className={`mt-6 flex flex-wrap gap-2 ${isUrdu ? "justify-end" : "justify-center"}`}>
           <Link
             to="/"
             className="inline-flex items-center justify-center rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground"
+            style={{ minHeight: "48px" }}
           >
-            Go to Home
+            {t("goToHome")}
           </Link>
           <Link
             to="/shop"
             className="inline-flex items-center justify-center rounded-lg border border-border bg-background px-5 py-3 text-sm font-semibold"
+            style={{ minHeight: "48px" }}
           >
-            Shop Shoes
+            {t("shopShoesLink")}
           </Link>
         </div>
       </div>
@@ -47,6 +54,7 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
+  const { t } = useLanguage();
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
@@ -55,10 +63,10 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          Something went wrong
+          {t("somethingWentWrong")}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Please try again, or head back home.
+          {t("tryAgainText")}
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
@@ -67,11 +75,16 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
               reset();
             }}
             className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+            style={{ minHeight: "44px" }}
           >
-            Try again
+            {t("tryAgain")}
           </button>
-          <a href="/" className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-semibold">
-            Go home
+          <a
+            href="/"
+            className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-semibold"
+            style={{ minHeight: "44px", display: "inline-flex", alignItems: "center" }}
+          >
+            {t("goHome")}
           </a>
         </div>
       </div>
@@ -84,13 +97,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "StepStyle Pakistan - Comfortable Shoes, Cash on Delivery" },
+      { title: "ZORO - Comfortable Shoes, Cash on Delivery" },
       {
         name: "description",
         content:
           "Buy quality shoes online in Pakistan. Cash on Delivery, easy size exchange, delivery all over Pakistan.",
       },
-      { property: "og:title", content: "StepStyle Pakistan - Shoes with Cash on Delivery" },
+      { property: "og:title", content: "ZORO - Shoes with Cash on Delivery" },
       {
         property: "og:description",
         content: "Comfortable shoes delivered anywhere in Pakistan. Pay cash when your order arrives.",
@@ -110,7 +123,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap",
       },
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/logo.png", type: "image/x-icon" },
@@ -118,9 +131,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   }),
   shellComponent: RootShell,
   component: RootComponent,
-  notFoundComponent: NotFoundComponent,
+  notFoundComponent: NotFoundComponentWrapper,
   errorComponent: ErrorComponent,
 });
+
+function NotFoundComponentWrapper() {
+  return (
+    <LanguageProvider>
+      <NotFoundComponent />
+    </LanguageProvider>
+  );
+}
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
@@ -141,10 +162,12 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <CartProvider>
-        <Outlet />
-        <Toaster position="top-center" richColors />
-      </CartProvider>
+      <LanguageProvider>
+        <CartProvider>
+          <Outlet />
+          <Toaster position="top-center" richColors />
+        </CartProvider>
+      </LanguageProvider>
     </QueryClientProvider>
   );
 }

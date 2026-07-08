@@ -1,5 +1,5 @@
 export const siteConfig = {
-  brandName: "StepStyle Pakistan",
+  brandName: "ZORO",
   tagline: "Comfortable shoes, delivered anywhere in Pakistan.",
   phone: "+92 300 1234567",
   whatsapp: "923001234567",

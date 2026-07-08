@@ -19,6 +19,7 @@ export type SavedOrder = {
   subtotal: number;
   deliveryFee: number;
   total: number;
+  paymentMethod: string;
   status: "Received" | "Confirmed" | "Packed" | "Shipped" | "Delivered";
 };
 

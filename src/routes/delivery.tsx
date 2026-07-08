@@ -1,33 +1,56 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Layout } from "@/components/Layout";
 import { siteConfig } from "@/config/siteConfig";
+import { useLanguage } from "@/lib/language-context";
 
 export const Route = createFileRoute("/delivery")({
-  head: () => ({ meta: [{ title: "Delivery Information - StepStyle Pakistan" }] }),
-  component: () => (
+  head: () => ({ meta: [{ title: "Delivery Information - ZORO" }] }),
+  component: DeliveryPage,
+});
+
+function DeliveryPage() {
+  const { t, lang } = useLanguage();
+  const isUrdu = lang === "ur";
+  return (
     <Layout>
-      <div className="mx-auto max-w-2xl px-4 py-10 space-y-6">
-        <h1 className="text-3xl font-extrabold">Delivery Information</h1>
-        <div>
-          <h2 className="text-xl font-bold">Delivery Across Pakistan</h2>
-          <p className="text-muted-foreground">We deliver to cities and towns across Pakistan.</p>
-        </div>
-        <div>
-          <h2 className="text-xl font-bold">Delivery Time</h2>
-          <p className="text-muted-foreground">Major Cities: 2-4 working days</p>
-          <p className="text-muted-foreground">Other Cities: 3-7 working days</p>
-        </div>
-        <div>
-          <h2 className="text-xl font-bold">Payment</h2>
-          <p className="text-muted-foreground">Cash on Delivery. You pay when your order arrives.</p>
-        </div>
-        <div>
-          <h2 className="text-xl font-bold">Delivery Charges</h2>
-          <p className="text-muted-foreground">
-            Rs. {siteConfig.deliveryFee} on all orders. Free delivery on orders over Rs. {siteConfig.freeDeliveryThreshold}.
-          </p>
+      <div className={`mx-auto max-w-2xl px-4 py-10 ${isUrdu ? "text-right" : ""}`}>
+        <h1 className={`mb-6 font-extrabold ${isUrdu ? "text-2xl sm:text-3xl leading-[1.7]" : "text-3xl"}`}>
+          {t("deliveryTitle")}
+        </h1>
+        <div className="space-y-4">
+          <InfoCard title={t("deliveryAcrossPakTitle")} isUrdu={isUrdu}>
+            <p className="text-sm text-muted-foreground">{t("deliveryAcrossPakText")}</p>
+          </InfoCard>
+          <InfoCard title={t("deliveryTimeTitle")} isUrdu={isUrdu}>
+            <ul className="space-y-1 text-sm text-muted-foreground">
+              <li>✓ {t("deliveryMajorCities")}</li>
+              <li>✓ {t("deliveryOtherCities")}</li>
+            </ul>
+          </InfoCard>
+          <InfoCard title={t("deliveryPaymentTitle")} isUrdu={isUrdu}>
+            <p className="text-sm text-muted-foreground">{t("deliveryPaymentText")}</p>
+          </InfoCard>
+          <InfoCard title={t("deliveryChargesTitle")} isUrdu={isUrdu}>
+            <p className="text-sm text-muted-foreground">
+              {t("deliveryChargesText1")}{" "}
+              <span dir="ltr" className="ltr-content font-semibold">{siteConfig.deliveryFee}</span>{" "}
+              {t("deliveryChargesText2")}{" "}
+              <span dir="ltr" className="ltr-content font-semibold">{siteConfig.freeDeliveryThreshold}</span>.
+            </p>
+          </InfoCard>
         </div>
       </div>
     </Layout>
-  ),
-});
+  );
+}
+
+function InfoCard({ title, children, isUrdu }: { title: string; children: React.ReactNode; isUrdu?: boolean }) {
+  return (
+    <div className={`rounded-2xl border border-border bg-card p-5 ${isUrdu ? "text-right" : ""}`}>
+      <h2 className={`mb-2 font-bold text-foreground ${isUrdu ? "text-base leading-[1.8]" : "text-base"}`}>
+        {title}
+      </h2>
+      {children}
+    </div>
+  );
+}

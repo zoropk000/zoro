@@ -1,42 +1,60 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
 import { Layout } from "@/components/Layout";
+import { useLanguage } from "@/lib/language-context";
+import { useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 export const Route = createFileRoute("/faq")({
-  head: () => ({ meta: [{ title: "FAQ - StepStyle Pakistan" }] }),
+  head: () => ({ meta: [{ title: "FAQ - ZORO" }] }),
   component: FAQPage,
 });
 
-const FAQS = [
-  { q: "How can I place an order?", a: "Choose a shoe, select your size, enter your name, phone number, and address, then click Place Order. No account is needed." },
-  { q: "Is Cash on Delivery available?", a: "Yes. You pay cash when your order arrives. No online payment is required." },
-  { q: "Do I need an account?", a: "No. You can place an order without creating any account." },
-  { q: "How long does delivery take?", a: "Major cities: 2-4 working days. Other cities: 3-7 working days." },
-  { q: "How do I choose my shoe size?", a: "Use our Simple Size Guide. Measure your foot in cm and match it to the size chart. You can also message us on WhatsApp for help." },
-  { q: "What happens if the size does not fit?", a: "Contact us with your order number. We will guide you through the size exchange process." },
-  { q: "Can I exchange my shoes?", a: "Yes, for size issues. The shoes must be unused and in original condition." },
-  { q: "Do you deliver all over Pakistan?", a: "Yes, we deliver across Pakistan." },
-  { q: "How can I track my order?", a: "Go to the Track Order page and enter your order number and mobile number." },
-  { q: "How can I contact customer support?", a: "Message us on WhatsApp or call us using the numbers on our Contact page." },
-];
-
 function FAQPage() {
+  const { t, lang } = useLanguage();
+  const isUrdu = lang === "ur";
   const [open, setOpen] = useState<number | null>(0);
+
+  const faqs = [
+    { q: t("faqQ1"), a: t("faqA1") },
+    { q: t("faqQ2"), a: t("faqA2") },
+    { q: t("faqQ3"), a: t("faqA3") },
+    { q: t("faqQ4"), a: t("faqA4") },
+    { q: t("faqQ5"), a: t("faqA5") },
+    { q: t("faqQ6"), a: t("faqA6") },
+    { q: t("faqQ7"), a: t("faqA7") },
+    { q: t("faqQ8"), a: t("faqA8") },
+    { q: t("faqQ9"), a: t("faqA9") },
+    { q: t("faqQ10"), a: t("faqA10") },
+  ];
+
   return (
     <Layout>
-      <div className="mx-auto max-w-3xl px-4 py-10">
-        <h1 className="mb-6 text-3xl font-extrabold">Frequently Asked Questions</h1>
-        <div className="divide-y divide-border rounded-2xl border border-border bg-card">
-          {FAQS.map((f, i) => (
+      <div className={`mx-auto max-w-2xl px-4 py-10 ${isUrdu ? "text-right" : ""}`}>
+        <h1 className={`mb-6 font-extrabold ${isUrdu ? "text-2xl sm:text-3xl leading-[1.7]" : "text-3xl"}`}>
+          {t("faqTitle")}
+        </h1>
+        <div className="divide-y divide-border rounded-2xl border border-border">
+          {faqs.map((f, i) => (
             <div key={i}>
               <button
                 onClick={() => setOpen(open === i ? null : i)}
-                className="flex w-full items-center justify-between p-5 text-left font-semibold"
+                className={`faq-question flex w-full items-center px-5 py-4 text-left text-base font-semibold text-foreground ${
+                  isUrdu ? "flex-row-reverse text-right" : "justify-between"
+                }`}
+                style={{ minHeight: "60px" }}
               >
-                <span>{f.q}</span>
-                <span className="text-xl">{open === i ? "−" : "+"}</span>
+                <span className="flex-1">{f.q}</span>
+                {open === i ? (
+                  <ChevronUp className="ml-2 h-5 w-5 flex-shrink-0 text-primary" />
+                ) : (
+                  <ChevronDown className="ml-2 h-5 w-5 flex-shrink-0 text-muted-foreground" />
+                )}
               </button>
-              {open === i && <p className="px-5 pb-5 text-muted-foreground">{f.a}</p>}
+              {open === i && (
+                <div className={`px-5 pb-5 text-sm text-muted-foreground ${isUrdu ? "text-right" : ""}`}>
+                  {f.a}
+                </div>
+              )}
             </div>
           ))}
         </div>
