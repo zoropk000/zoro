@@ -10,8 +10,7 @@ export const Route = createFileRoute("/faq")({
 });
 
 function FAQPage() {
-  const { t, lang } = useLanguage();
-  const isUrdu = lang === "ur";
+  const { t } = useLanguage();
   const [open, setOpen] = useState<number | null>(0);
 
   const faqs = [
@@ -29,31 +28,20 @@ function FAQPage() {
 
   return (
     <Layout>
-      <div className={`mx-auto max-w-2xl px-4 py-10 ${isUrdu ? "text-right" : ""}`}>
-        <h1 className={`mb-6 font-extrabold ${isUrdu ? "text-2xl sm:text-3xl leading-[1.7]" : "text-3xl"}`}>
-          {t("faqTitle")}
-        </h1>
+      <div className="mx-auto max-w-2xl px-4 py-10">
+        <h1 className="mb-6 text-3xl font-extrabold">{t("faqTitle")}</h1>
         <div className="divide-y divide-border rounded-2xl border border-border">
           {faqs.map((f, i) => (
             <div key={i}>
               <button
                 onClick={() => setOpen(open === i ? null : i)}
-                className={`faq-question flex w-full items-center px-5 py-4 text-left text-base font-semibold text-foreground ${
-                  isUrdu ? "flex-row-reverse text-right" : "justify-between"
-                }`}
-                style={{ minHeight: "60px" }}
+                className="flex w-full items-center justify-between px-5 py-4 text-left text-base font-semibold text-foreground"
               >
-                <span className="flex-1">{f.q}</span>
-                {open === i ? (
-                  <ChevronUp className="ml-2 h-5 w-5 flex-shrink-0 text-primary" />
-                ) : (
-                  <ChevronDown className="ml-2 h-5 w-5 flex-shrink-0 text-muted-foreground" />
-                )}
+                {f.q}
+                {open === i ? <ChevronUp className="h-5 w-5 shrink-0 text-primary" /> : <ChevronDown className="h-5 w-5 shrink-0 text-muted-foreground" />}
               </button>
               {open === i && (
-                <div className={`px-5 pb-5 text-sm text-muted-foreground ${isUrdu ? "text-right" : ""}`}>
-                  {f.a}
-                </div>
+                <div className="px-5 pb-4 text-sm text-muted-foreground">{f.a}</div>
               )}
             </div>
           ))}

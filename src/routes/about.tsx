@@ -9,22 +9,17 @@ export const Route = createFileRoute("/about")({
 });
 
 function AboutPage() {
-  const { t, lang } = useLanguage();
-  const isUrdu = lang === "ur";
+  const { t } = useLanguage();
   return (
     <Layout>
-      <div className={`mx-auto max-w-2xl px-4 py-10 ${isUrdu ? "text-right" : ""}`}>
-        <h1 className={`mb-4 font-extrabold ${isUrdu ? "text-2xl sm:text-3xl leading-[1.7]" : "text-3xl"}`}>
-          {t("aboutTitle")}
-        </h1>
+      <div className="mx-auto max-w-2xl px-4 py-10">
+        <h1 className="mb-4 text-3xl font-extrabold">{t("aboutTitle")}</h1>
         <p className="mb-4 text-muted-foreground">
           <strong>{siteConfig.brandName}</strong> {t("aboutP1")}
         </p>
         <p className="mb-6 text-muted-foreground">{t("aboutP2")}</p>
-        <div className={`rounded-2xl border border-border bg-card p-5 ${isUrdu ? "text-right" : ""}`}>
-          <h2 className={`mb-3 font-bold ${isUrdu ? "text-base leading-[1.8]" : "text-lg"}`}>
-            {t("aboutWhatWeOffer")}
-          </h2>
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <h2 className="mb-3 text-lg font-bold">{t("aboutWhatWeOffer")}</h2>
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li>✓ {t("aboutOffer1")}</li>
             <li>✓ {t("aboutOffer2")}</li>

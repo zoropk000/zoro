@@ -8,40 +8,32 @@ export const Route = createFileRoute("/size-guide")({
 });
 
 const SIZE_ROWS = [
-  { cm: "23.5", eu: 37 }, { cm: "24.0", eu: 38 }, { cm: "24.5", eu: 39 },
-  { cm: "25.0", eu: 40 }, { cm: "25.5", eu: 41 }, { cm: "26.0", eu: 42 },
-  { cm: "26.5", eu: 43 }, { cm: "27.0", eu: 44 }, { cm: "27.5", eu: 45 },
+  { cm: "23.5", eu: 37 },
+  { cm: "24.0", eu: 38 },
+  { cm: "24.5", eu: 39 },
+  { cm: "25.0", eu: 40 },
+  { cm: "25.5", eu: 41 },
+  { cm: "26.0", eu: 42 },
+  { cm: "26.5", eu: 43 },
+  { cm: "27.0", eu: 44 },
+  { cm: "27.5", eu: 45 },
 ];
 
 function SizeGuidePage() {
-  const { t, lang } = useLanguage();
-  const isUrdu = lang === "ur";
+  const { t } = useLanguage();
   return (
     <Layout>
-      <div className={`mx-auto max-w-2xl px-4 py-10 ${isUrdu ? "text-right" : ""}`}>
-        <h1 className={`mb-2 font-extrabold ${isUrdu ? "text-2xl sm:text-3xl leading-[1.7]" : "text-3xl"}`}>
-          {t("sizeGuideTitle")}
-        </h1>
+      <div className="mx-auto max-w-2xl px-4 py-10">
+        <h1 className="mb-2 text-3xl font-extrabold">{t("sizeGuideTitle")}</h1>
         <p className="mb-6 text-muted-foreground">{t("sizeGuideSub")}</p>
-        <ol
-          className={`mb-6 space-y-2 rounded-2xl border border-border bg-card p-5 text-base text-foreground ${
-            isUrdu ? "list-none" : "list-inside list-decimal"
-          }`}
-        >
-          {[
-            t("sizeGuideStep1"), t("sizeGuideStep2"), t("sizeGuideStep3"),
-            t("sizeGuideStep4"), t("sizeGuideStep5"),
-          ].map((step, i) => (
-            <li key={i} className={isUrdu ? "flex items-start gap-2 flex-row-reverse" : ""}>
-              {isUrdu && (
-                <span dir="ltr" className="ltr-content mt-0.5 flex-shrink-0 font-bold text-primary">{i + 1}.</span>
-              )}
-              {step}
-            </li>
-          ))}
+        <ol className="mb-6 list-inside list-decimal space-y-2 text-base text-foreground rounded-2xl border border-border bg-card p-5">
+          <li>{t("sizeGuideStep1")}</li>
+          <li>{t("sizeGuideStep2")}</li>
+          <li>{t("sizeGuideStep3")}</li>
+          <li>{t("sizeGuideStep4")}</li>
+          <li>{t("sizeGuideStep5")}</li>
         </ol>
-        {/* Table always LTR (numbers + cm measurements) */}
-        <div className="overflow-hidden rounded-2xl border border-border" dir="ltr">
+        <div className="overflow-hidden rounded-2xl border border-border">
           <table className="w-full text-sm">
             <thead className="bg-secondary">
               <tr>
@@ -59,7 +51,7 @@ function SizeGuidePage() {
             </tbody>
           </table>
         </div>
-        <p className={`mt-6 text-sm text-muted-foreground ${isUrdu ? "text-right" : ""}`}>
+        <p className="mt-6 text-sm text-muted-foreground">
           {t("sizeGuideConfused")}{" "}
           <a
             href="https://wa.me/923170363100"

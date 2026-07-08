@@ -3,47 +3,33 @@ import { Link } from "@tanstack/react-router";
 import { useLanguage } from "@/lib/language-context";
 
 export function SizeGuideModal({ onClose }: { onClose: () => void }) {
-  const { t, lang } = useLanguage();
-  const isUrdu = lang === "ur";
+  const { t } = useLanguage();
   const rows = [
-    { cm: "24.5", size: 39 }, { cm: "25.0", size: 40 }, { cm: "25.5", size: 41 },
-    { cm: "26.0", size: 42 }, { cm: "26.5", size: 43 }, { cm: "27.0", size: 44 },
+    { cm: "24.5", size: 39 },
+    { cm: "25.0", size: 40 },
+    { cm: "25.5", size: 41 },
+    { cm: "26.0", size: 42 },
+    { cm: "26.5", size: 43 },
+    { cm: "27.0", size: 44 },
     { cm: "27.5", size: 45 },
   ];
-
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4">
-      <div
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-background p-6 sm:rounded-2xl"
-        dir={isUrdu ? "rtl" : "ltr"}
-      >
-        <div className={`mb-4 flex items-center justify-between ${isUrdu ? "flex-row-reverse" : ""}`}>
-          <h3 className={`font-bold ${isUrdu ? "text-lg leading-[1.8]" : "text-xl"}`}>
-            {t("sizeGuideTitle")}
-          </h3>
+      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-background p-6 sm:rounded-2xl">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-xl font-bold">{t("sizeGuideTitle")}</h3>
           <button onClick={onClose} className="rounded-md p-2 hover:bg-secondary" aria-label="Close">
             <X className="h-5 w-5" />
           </button>
         </div>
-
-        <ol className={`mb-4 space-y-2 text-sm text-foreground ${isUrdu ? "list-none" : "list-inside list-decimal"}`}>
-          {[
-            t("sizeGuideStep1"), t("sizeGuideStep2"), t("sizeGuideStep3"),
-            t("sizeGuideStep4"), t("sizeGuideStep5"),
-          ].map((step, i) => (
-            <li key={i} className={isUrdu ? "flex items-start gap-2 flex-row-reverse" : ""}>
-              {isUrdu && (
-                <span dir="ltr" className="ltr-content mt-0.5 flex-shrink-0 font-bold text-primary">
-                  {i + 1}.
-                </span>
-              )}
-              {step}
-            </li>
-          ))}
+        <ol className="mb-4 list-inside list-decimal space-y-2 text-sm text-foreground">
+          <li>{t("sizeGuideStep1")}</li>
+          <li>{t("sizeGuideStep2")}</li>
+          <li>{t("sizeGuideStep3")}</li>
+          <li>{t("sizeGuideStep4")}</li>
+          <li>{t("sizeGuideStep5")}</li>
         </ol>
-
-        {/* Table always LTR - measurements are numbers */}
-        <table className="mb-4 w-full text-sm" dir="ltr">
+        <table className="mb-4 w-full text-sm">
           <thead>
             <tr className="border-b border-border text-left">
               <th className="py-2">{t("footLength")}</th>
@@ -59,8 +45,7 @@ export function SizeGuideModal({ onClose }: { onClose: () => void }) {
             ))}
           </tbody>
         </table>
-
-        <p className={`text-sm text-muted-foreground ${isUrdu ? "text-right" : ""}`}>
+        <p className="text-sm text-muted-foreground">
           {t("sizeGuideConfused")}{" "}
           <Link to="/contact" className="font-semibold text-primary">
             {t("messageUsWhatsApp")}

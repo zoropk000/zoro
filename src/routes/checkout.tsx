@@ -19,8 +19,7 @@ type Errors = Partial<Record<"name" | "phone" | "city" | "cityOther" | "address"
 function CheckoutPage() {
   const { lines, subtotal, clearCart } = useCart();
   const navigate = useNavigate();
-  const { t, lang } = useLanguage();
-  const isUrdu = lang === "ur";
+  const { t } = useLanguage();
   const delivery = calcDeliveryFee(subtotal);
   const total = subtotal + delivery;
 
@@ -35,7 +34,9 @@ function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState("cod");
 
   useEffect(() => {
-    if (lines.length === 0) navigate({ to: "/cart" });
+    if (lines.length === 0) {
+      navigate({ to: "/cart" });
+    }
   }, [lines.length, navigate]);
 
   const validate = (): boolean => {
@@ -94,173 +95,87 @@ function CheckoutPage() {
   return (
     <Layout>
       <div className="mx-auto max-w-6xl px-4 py-8 pb-28">
-        <div className={`mb-6 ${isUrdu ? "text-right" : "text-center"}`}>
-          <h1 className={`font-extrabold ${isUrdu ? "text-2xl sm:text-3xl leading-[1.7]" : "text-3xl"}`}>
-            {t("completeYourOrder")}
-          </h1>
+        <div className="mb-6 text-center">
+          <h1 className="text-3xl font-extrabold">{t("completeYourOrder")}</h1>
           <p className="mt-2 text-muted-foreground">{t("checkoutSubtitle")}</p>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
-          {/* Form */}
+        <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
           <form
             onSubmit={(e) => { e.preventDefault(); handleReviewClick(); }}
-            className={`space-y-5 rounded-2xl border border-border bg-card p-5 sm:p-6 ${isUrdu ? "text-right" : ""}`}
+            className="space-y-5 rounded-2xl border border-border bg-card p-5 sm:p-6"
           >
-            <Field
-              label={t("yourFullName")}
-              value={name}
-              onChange={setName}
-              placeholder={t("namePlaceholder")}
-              error={errors.name}
-              autoComplete="name"
-              isUrdu={isUrdu}
-            />
-            <Field
-              label={t("mobileNumber")}
-              value={phone}
-              onChange={setPhone}
-              placeholder={t("mobilePlaceholder")}
-              error={errors.phone}
-              helper={t("mobileHelper")}
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel"
-              isUrdu={isUrdu}
-              alwaysLtr  /* phone always LTR */
-            />
+            <Field label={t("yourFullName")} value={name} onChange={setName} placeholder={t("namePlaceholder")} error={errors.name} autoComplete="name" />
+            <Field label={t("mobileNumber")} value={phone} onChange={setPhone} placeholder={t("mobilePlaceholder")} error={errors.phone} helper={t("mobileHelper")} type="tel" inputMode="tel" autoComplete="tel" />
             <div>
-              <label className={`mb-1 block text-sm font-semibold ${isUrdu ? "text-right" : ""}`}>
-                {t("city")}
-              </label>
+              <label className="mb-1 block text-sm font-semibold">{t("city")}</label>
               <select
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 className="w-full rounded-xl border border-border bg-background px-4 py-4 text-base"
-                style={{
-                  minHeight: "52px",
-                  direction: isUrdu ? "rtl" : "ltr",
-                  textAlign: isUrdu ? "right" : "left",
-                }}
               >
                 <option value="">{t("selectYourCity")}</option>
                 {pakistaniCities.map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
-              {errors.city && <p className={`mt-1 text-sm text-destructive ${isUrdu ? "text-right" : ""}`}>{errors.city}</p>}
+              {errors.city && <p className="mt-1 text-sm text-destructive">{errors.city}</p>}
               {city === "Other" && (
                 <div className="mt-3">
-                  <Field
-                    label={t("enterCityName")}
-                    value={cityOther}
-                    onChange={setCityOther}
-                    placeholder={t("cityPlaceholder")}
-                    error={errors.cityOther}
-                    isUrdu={isUrdu}
-                  />
+                  <Field label={t("enterCityName")} value={cityOther} onChange={setCityOther} placeholder={t("cityPlaceholder")} error={errors.cityOther} />
                 </div>
               )}
             </div>
-
             <div>
-              <label className={`mb-1 block text-sm font-semibold ${isUrdu ? "text-right" : ""}`}>
-                {t("completeDeliveryAddress")}
-              </label>
+              <label className="mb-1 block text-sm font-semibold">{t("completeDeliveryAddress")}</label>
               <textarea
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder={t("addressPlaceholder")}
                 rows={3}
                 className="w-full rounded-xl border border-border bg-background px-4 py-3 text-base"
-                dir={isUrdu ? "rtl" : "ltr"}
-                style={{ textAlign: isUrdu ? "right" : "left", minHeight: "80px" }}
               />
-              <p className={`mt-1 text-xs text-muted-foreground ${isUrdu ? "text-right" : ""}`}>
-                {t("addressHelper")}
-              </p>
-              {errors.address && <p className={`mt-1 text-sm text-destructive ${isUrdu ? "text-right" : ""}`}>{errors.address}</p>}
+              <p className="mt-1 text-xs text-muted-foreground">{t("addressHelper")}</p>
+              {errors.address && <p className="mt-1 text-sm text-destructive">{errors.address}</p>}
             </div>
-
-            <Field
-              label={t("landmark")}
-              value={landmark}
-              onChange={setLandmark}
-              placeholder={t("landmarkPlaceholder")}
-              isUrdu={isUrdu}
-            />
+            <Field label={t("landmark")} value={landmark} onChange={setLandmark} placeholder={t("landmarkPlaceholder")} />
           </form>
 
-          {/* Order summary aside */}
-          <aside className={`h-fit space-y-4 rounded-2xl border border-border bg-card p-5 ${isUrdu ? "text-right" : ""}`}>
-            <h2 className={`font-bold ${isUrdu ? "text-lg leading-[1.8]" : "text-lg"}`}>
-              {t("yourOrder")}
-            </h2>
-
+          <aside className="h-fit space-y-4 rounded-2xl border border-border bg-card p-5">
+            <h2 className="text-lg font-bold">{t("yourOrder")}</h2>
             <div className="space-y-3">
               {lines.map((l) => (
-                <div
-                  key={`${l.productId}-${l.size}`}
-                  className={`flex gap-3 ${isUrdu ? "flex-row-reverse" : ""}`}
-                >
-                  <div className="image-overflow h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg">
-                    <img src={l.product.images[0]} alt="" className="h-full w-full object-cover" />
-                  </div>
-                  <div className={`flex-1 text-sm ${isUrdu ? "text-right" : ""}`}>
+                <div key={`${l.productId}-${l.size}`} className="flex gap-3">
+                  <img src={l.product.images[0]} alt="" className="h-16 w-16 rounded-lg object-cover" />
+                  <div className="flex-1 text-sm">
                     <div className="font-semibold">{l.product.name}</div>
-                    <div className="text-muted-foreground">
-                      {t("sizeLabel")}{" "}
-                      <span dir="ltr" className="ltr-content">{l.size}</span>
-                      {" • "}{t("qtyLabel")}{" "}
-                      <span dir="ltr" className="ltr-content">{l.quantity}</span>
-                    </div>
-                    <div className="ltr-content font-semibold">{formatPKR(l.product.price * l.quantity)}</div>
+                    <div className="text-muted-foreground">{t("sizeLabel")} {l.size} • {t("qtyLabel")} {l.quantity}</div>
+                    <div className="font-semibold">{formatPKR(l.product.price * l.quantity)}</div>
                   </div>
                 </div>
               ))}
             </div>
-
-            <div className={`space-y-1 border-t border-border pt-3 text-sm ${isUrdu ? "" : ""}`}>
-              <SumRow label={t("products")} value={formatPKR(subtotal)} isUrdu={isUrdu} />
-              <SumRow
-                label={t("delivery")}
-                value={delivery === 0 ? t("freeDelivery") : formatPKR(delivery)}
-                isUrdu={isUrdu}
-              />
+            <div className="space-y-1 border-t border-border pt-3 text-sm">
+              <SumRow label={t("products")} value={formatPKR(subtotal)} />
+              <SumRow label={t("delivery")} value={delivery === 0 ? t("freeDelivery") : formatPKR(delivery)} />
             </div>
-
-            <div className={`rounded-xl bg-secondary p-4 ${isUrdu ? "text-right" : ""}`}>
+            <div className="rounded-xl bg-secondary p-4">
               <div className="text-sm text-muted-foreground">{t("youWillPay")}</div>
-              <div className="ltr-content text-2xl font-extrabold">{formatPKR(total)}</div>
+              <div className="text-2xl font-extrabold">{formatPKR(total)}</div>
             </div>
 
             {/* Payment methods */}
             <div>
-              <div className={`mb-2 text-sm font-bold ${isUrdu ? "text-right" : ""}`}>
-                {t("selectPaymentMethod")}
-              </div>
+              <div className="mb-2 text-sm font-bold">{t("selectPaymentMethod")}</div>
               <div className="space-y-3">
                 {[
                   { val: "cod", label: t("codLabel") },
                   { val: "easypaisa", label: t("easypaisaLabel") },
                   { val: "meezan", label: t("meezanLabel") },
                 ].map(({ val, label }) => (
-                  <label
-                    key={val}
-                    className={`payment-card block cursor-pointer rounded-xl border p-4 ${
-                      paymentMethod === val ? "border-primary bg-primary/5" : "border-border bg-card"
-                    }`}
-                    style={{ minHeight: "60px" }}
-                  >
-                    <div className={`flex items-center gap-3 ${isUrdu ? "flex-row-reverse" : ""}`}>
-                      <input
-                        type="radio"
-                        name="payment"
-                        value={val}
-                        checked={paymentMethod === val}
-                        onChange={() => setPaymentMethod(val)}
-                        className="h-4 w-4 flex-shrink-0 text-primary"
-                      />
+                  <label key={val} className={`block cursor-pointer rounded-xl border p-4 ${paymentMethod === val ? "border-primary bg-primary/5" : "border-border bg-card"}`}>
+                    <div className="flex items-center gap-3">
+                      <input type="radio" name="payment" value={val} checked={paymentMethod === val} onChange={() => setPaymentMethod(val)} className="h-4 w-4 text-primary" />
                       <div className="font-bold text-foreground">{label}</div>
                     </div>
                   </label>
@@ -269,152 +184,82 @@ function CheckoutPage() {
             </div>
 
             {paymentMethod === "easypaisa" && (
-              <div className={`rounded-xl bg-secondary p-4 text-sm ${isUrdu ? "text-right" : ""}`}>
+              <div className="rounded-xl bg-secondary p-4 text-sm">
                 <div className="mb-1 font-bold text-foreground">{t("easypaisaDetails")}</div>
                 <div className="flex items-center justify-between rounded-lg border border-border bg-background p-2">
-                  {/* Account number ALWAYS LTR */}
-                  <span dir="ltr" className="payment-number font-mono text-base font-semibold">
-                    03170363100
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => navigator.clipboard.writeText("03170363100")}
-                    className="text-xs font-bold text-primary"
-                    style={{ minHeight: "32px" }}
-                  >
-                    {t("copyBtn")}
-                  </button>
+                  <span className="font-mono text-base font-semibold">03170363100</span>
+                  <button type="button" onClick={() => navigator.clipboard.writeText("03170363100")} className="text-xs font-bold text-primary">{t("copyBtn")}</button>
                 </div>
                 <p className="mt-2 font-semibold text-destructive">{t("completePaymentFirst")}</p>
                 <div className="mt-3">
-                  <label className={`mb-1 block text-xs font-semibold text-muted-foreground ${isUrdu ? "text-right" : ""}`}>
-                    {t("uploadScreenshot")}
-                  </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="w-full text-sm file:mr-4 file:rounded-full file:border-0 file:bg-primary/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20"
-                  />
+                  <label className="mb-1 block text-xs font-semibold text-muted-foreground">{t("uploadScreenshot")}</label>
+                  <input type="file" accept="image/*" className="w-full text-sm file:mr-4 file:rounded-full file:border-0 file:bg-primary/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20" />
                 </div>
               </div>
             )}
 
             {paymentMethod === "meezan" && (
-              <div className={`rounded-xl bg-secondary p-4 text-sm ${isUrdu ? "text-right" : ""}`}>
+              <div className="rounded-xl bg-secondary p-4 text-sm">
                 <div className="mb-1 font-bold text-foreground">{t("meezanDetails")}</div>
                 <div className="flex items-center justify-between rounded-lg border border-border bg-background p-2">
-                  {/* Bank account number ALWAYS LTR */}
-                  <span dir="ltr" className="payment-number font-mono text-base font-semibold">
-                    00300115118325
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => navigator.clipboard.writeText("00300115118325")}
-                    className="text-xs font-bold text-primary"
-                    style={{ minHeight: "32px" }}
-                  >
-                    {t("copyBtn")}
-                  </button>
+                  <span className="font-mono text-base font-semibold">00300115118325</span>
+                  <button type="button" onClick={() => navigator.clipboard.writeText("00300115118325")} className="text-xs font-bold text-primary">{t("copyBtn")}</button>
                 </div>
                 <p className="mt-2 font-semibold text-destructive">{t("completePaymentFirst")}</p>
                 <div className="mt-3">
-                  <label className={`mb-1 block text-xs font-semibold text-muted-foreground ${isUrdu ? "text-right" : ""}`}>
-                    {t("uploadScreenshot")}
-                  </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="w-full text-sm file:mr-4 file:rounded-full file:border-0 file:bg-primary/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20"
-                  />
+                  <label className="mb-1 block text-xs font-semibold text-muted-foreground">{t("uploadScreenshot")}</label>
+                  <input type="file" accept="image/*" className="w-full text-sm file:mr-4 file:rounded-full file:border-0 file:bg-primary/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20" />
                 </div>
               </div>
             )}
 
-            <button
-              type="button"
-              onClick={handleReviewClick}
-              className="w-full rounded-xl bg-primary py-5 text-base font-extrabold text-primary-foreground hover:bg-primary/90"
-              style={{ minHeight: "60px" }}
-            >
+            <button type="button" onClick={handleReviewClick} className="w-full rounded-xl bg-primary py-5 text-lg font-extrabold text-primary-foreground hover:bg-primary/90">
               {t("placeMyOrder")}
             </button>
-
-            <ul className={`space-y-1.5 text-xs text-muted-foreground ${isUrdu ? "text-right" : ""}`}>
-              {[
-                { icon: <Lock className="h-3 w-3 flex-shrink-0" />, text: t("infoSafe") },
-                { icon: <Wallet className="h-3 w-3 flex-shrink-0" />, text: t("payWhenArrives") },
-                { icon: <Phone className="h-3 w-3 flex-shrink-0" />, text: t("mayCall") },
-                { icon: <ShieldCheck className="h-3 w-3 flex-shrink-0" />, text: t("noAccountNeeded") },
-              ].map(({ icon, text }, i) => (
-                <li key={i} className={`flex items-start gap-2 ${isUrdu ? "flex-row-reverse" : ""}`}>
-                  <span className="mt-0.5">{icon}</span>
-                  {text}
-                </li>
-              ))}
+            <ul className="space-y-1 text-xs text-muted-foreground">
+              <li className="flex items-center gap-2"><Lock className="h-3 w-3" /> {t("infoSafe")}</li>
+              <li className="flex items-center gap-2"><Wallet className="h-3 w-3" /> {t("payWhenArrives")}</li>
+              <li className="flex items-center gap-2"><Phone className="h-3 w-3" /> {t("mayCall")}</li>
+              <li className="flex items-center gap-2"><ShieldCheck className="h-3 w-3" /> {t("noAccountNeeded")}</li>
             </ul>
           </aside>
         </div>
       </div>
 
-      {/* Order confirmation modal */}
       {showConfirm && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4">
-          <div
-            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-background p-6 sm:rounded-2xl"
-            dir={isUrdu ? "rtl" : "ltr"}
-          >
-            <div className={`mb-4 flex items-center justify-between ${isUrdu ? "flex-row-reverse" : ""}`}>
-              <h3 className={`font-extrabold ${isUrdu ? "text-lg leading-[1.7]" : "text-xl"}`}>
-                {t("pleaseCheckOrder")}
-              </h3>
-              <button onClick={() => setShowConfirm(false)} aria-label="Close" className="p-2">
-                <X className="h-5 w-5" />
-              </button>
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-background p-6 sm:rounded-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-xl font-extrabold">{t("pleaseCheckOrder")}</h3>
+              <button onClick={() => setShowConfirm(false)} aria-label="Close" className="p-2"><X className="h-5 w-5" /></button>
             </div>
-
             <div className="space-y-3 text-sm">
               {lines.map((l) => (
-                <div key={`${l.productId}-${l.size}`} className={`flex justify-between ${isUrdu ? "flex-row-reverse" : ""}`}>
-                  <span>
-                    {l.product.name} ({t("sizeLabel")}{" "}
-                    <span dir="ltr" className="ltr-content">{l.size}</span>) ×{" "}
-                    <span dir="ltr" className="ltr-content">{l.quantity}</span>
-                  </span>
-                  <span className="ltr-content font-semibold">{formatPKR(l.product.price * l.quantity)}</span>
+                <div key={`${l.productId}-${l.size}`} className="flex justify-between">
+                  <span>{l.product.name} ({t("sizeLabel")} {l.size}) × {l.quantity}</span>
+                  <span className="font-semibold">{formatPKR(l.product.price * l.quantity)}</span>
                 </div>
               ))}
-
               <div className="border-t border-border pt-2">
-                <div className={`flex text-lg font-extrabold ${isUrdu ? "flex-row-reverse" : "justify-between"}`}>
+                <div className="flex justify-between text-lg font-extrabold">
                   <span>{t("totalLabel")}</span>
-                  <span dir="ltr" className="ltr-content">{formatPKR(total)}</span>
+                  <span>{formatPKR(total)}</span>
                 </div>
               </div>
-
-              <div className={`rounded-lg bg-secondary p-3 ${isUrdu ? "text-right" : ""}`}>
+              <div className="rounded-lg bg-secondary p-3">
                 <div className="text-xs font-semibold uppercase text-muted-foreground">{t("deliverTo")}</div>
                 <div className="mt-1 font-semibold">{name}</div>
-                <div dir="ltr" className="ltr-content">{phone}</div>
+                <div>{phone}</div>
                 <div>{address}</div>
                 <div>{finalCity}{landmark ? `, ${landmark}` : ""}</div>
               </div>
-
               <div className="text-center text-sm font-semibold text-primary">{paymentDisplay}</div>
             </div>
-
             <div className="mt-5 flex flex-col gap-2">
-              <button
-                onClick={placeOrder}
-                className="w-full rounded-xl bg-primary py-4 text-base font-extrabold text-primary-foreground"
-                style={{ minHeight: "52px" }}
-              >
+              <button onClick={placeOrder} className="w-full rounded-xl bg-primary py-4 text-base font-extrabold text-primary-foreground">
                 {t("yesPlaceOrder")}
               </button>
-              <button
-                onClick={() => setShowConfirm(false)}
-                className="w-full rounded-xl border border-border py-3 text-sm font-semibold"
-                style={{ minHeight: "48px" }}
-              >
+              <button onClick={() => setShowConfirm(false)} className="w-full rounded-xl border border-border py-3 text-sm font-semibold">
                 {t("changeDetails")}
               </button>
             </div>
@@ -425,46 +270,26 @@ function CheckoutPage() {
   );
 }
 
-function SumRow({ label, value, isUrdu }: { label: string; value: string; isUrdu?: boolean }) {
+function SumRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className={`flex ${isUrdu ? "flex-row-reverse" : "justify-between"}`}>
+    <div className="flex justify-between">
       <span className="text-muted-foreground">{label}</span>
-      <span dir="ltr" className="ltr-content font-semibold">{value}</span>
+      <span className="font-semibold">{value}</span>
     </div>
   );
 }
 
-function Field({
-  label, value, onChange, placeholder, error, helper, type = "text",
-  inputMode, autoComplete, isUrdu, alwaysLtr,
-}: {
+function Field({ label, value, onChange, placeholder, error, helper, type = "text", inputMode, autoComplete }: {
   label: string; value: string; onChange: (v: string) => void;
   placeholder?: string; error?: string; helper?: string; type?: string;
   inputMode?: "text" | "tel" | "email" | "numeric"; autoComplete?: string;
-  isUrdu?: boolean; alwaysLtr?: boolean;
 }) {
-  const inputDir = alwaysLtr ? "ltr" : isUrdu ? "rtl" : "ltr";
-  const textAlign = alwaysLtr ? "left" : isUrdu ? "right" : "left";
   return (
-    <div className="checkout-field">
-      <label className={`mb-1 block text-sm font-semibold ${isUrdu ? "text-right" : ""}`}>{label}</label>
-      <input
-        type={type}
-        inputMode={inputMode}
-        autoComplete={autoComplete}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        dir={inputDir}
-        className="w-full rounded-xl border border-border bg-background px-4 py-4 text-base"
-        style={{ minHeight: "52px", textAlign, direction: inputDir }}
-      />
-      {helper && (
-        <p className={`mt-1 text-xs text-muted-foreground ${isUrdu ? "text-right" : ""}`}>{helper}</p>
-      )}
-      {error && (
-        <p className={`mt-1 text-sm text-destructive ${isUrdu ? "text-right" : ""}`}>{error}</p>
-      )}
+    <div>
+      <label className="mb-1 block text-sm font-semibold">{label}</label>
+      <input type={type} inputMode={inputMode} autoComplete={autoComplete} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="w-full rounded-xl border border-border bg-background px-4 py-4 text-base" />
+      {helper && <p className="mt-1 text-xs text-muted-foreground">{helper}</p>}
+      {error && <p className="mt-1 text-sm text-destructive">{error}</p>}
     </div>
   );
 }

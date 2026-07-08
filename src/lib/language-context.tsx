@@ -1,4 +1,4 @@
-// React context, LanguageProvider, and useLanguage hook - must be .tsx
+// React context, LanguageProvider, and useLanguage hook — must be .tsx
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import { translations, type Lang, type TranslationKey } from "./i18n";
 
@@ -24,7 +24,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     setLangState(l);
     try {
       localStorage.setItem("lang", l);
-    } catch { }
+    } catch {}
   };
 
   useEffect(() => {
@@ -32,13 +32,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     if (lang === "ur") {
       html.setAttribute("dir", "rtl");
       html.setAttribute("lang", "ur");
-      html.classList.add("lang-ur");
-      html.classList.remove("lang-en");
+      html.classList.add("urdu");
     } else {
       html.setAttribute("dir", "ltr");
       html.setAttribute("lang", "en");
-      html.classList.remove("lang-ur");
-      html.classList.add("lang-en");
+      html.classList.remove("urdu");
     }
   }, [lang]);
 

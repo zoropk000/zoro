@@ -12,8 +12,7 @@ export const Route = createFileRoute("/")({
 });
 
 function HomePage() {
-  const { t, lang } = useLanguage();
-  const isUrdu = lang === "ur";
+  const { t } = useLanguage();
   const bestSellers = products.filter((p) => p.bestSeller).slice(0, 8);
 
   const categories = [
@@ -33,51 +32,31 @@ function HomePage() {
     <Layout>
       {/* Hero */}
       <section className="bg-secondary/50">
-        <div
-          className={`mx-auto grid max-w-7xl items-center gap-6 px-4 py-8 sm:py-14 md:grid-cols-2 md:gap-10 ${isUrdu ? "md:flex md:flex-row-reverse" : ""
-            }`}
-        >
-          <div className="flex-1">
-            <h1
-              className={`hero-title font-extrabold leading-tight text-foreground ${isUrdu
-                  ? "text-3xl sm:text-4xl md:text-5xl"
-                  : "text-4xl sm:text-5xl md:text-6xl"
-                }`}
-            >
+        <div className="mx-auto grid max-w-7xl items-center gap-8 px-4 py-10 sm:py-16 md:grid-cols-2">
+          <div>
+            <h1 className="text-4xl font-extrabold leading-tight text-foreground sm:text-5xl md:text-6xl">
               {t("heroTitle")}
             </h1>
-            <p
-              className={`hero-subtitle mt-4 text-muted-foreground ${isUrdu ? "text-base sm:text-lg" : "text-lg"
-                }`}
-            >
+            <p className="mt-4 text-lg text-muted-foreground">
               {t("heroSubtitle")}
               <br />
               <span className="font-semibold text-foreground">{t("heroPay")}</span>
             </p>
-            <div
-              className={`mt-6 flex flex-wrap gap-3 ${isUrdu ? "justify-end" : ""}`}
-            >
-              <Link
-                to="/shop"
-                className="rounded-xl bg-primary px-5 py-3 text-base font-bold text-primary-foreground hover:bg-primary/90"
-              >
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link to="/shop" className="rounded-xl bg-primary px-6 py-4 text-base font-bold text-primary-foreground hover:bg-primary/90">
                 {t("shopShoes")}
               </Link>
-              <Link
-                to="/sale"
-                className="rounded-xl border border-primary bg-background px-5 py-3 text-base font-bold text-primary hover:bg-secondary"
-              >
+              <Link to="/sale" className="rounded-xl border border-primary bg-background px-6 py-4 text-base font-bold text-primary hover:bg-secondary">
                 {t("viewSale")}
               </Link>
             </div>
-            <div className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-3">
-              <TrustPoint icon={<Truck className="h-4 w-4 flex-shrink-0" />} label={t("deliveryAcrossPak")} />
-              <TrustPoint icon={<Wallet className="h-4 w-4 flex-shrink-0" />} label={t("cashOnDelivery")} />
-              <TrustPoint icon={<RefreshCw className="h-4 w-4 flex-shrink-0" />} label={t("easySizeExchange")} />
+            <div className="mt-8 grid gap-3 sm:grid-cols-3">
+              <TrustPoint icon={<Truck className="h-5 w-5" />} label={t("deliveryAcrossPak")} />
+              <TrustPoint icon={<Wallet className="h-5 w-5" />} label={t("cashOnDelivery")} />
+              <TrustPoint icon={<RefreshCw className="h-5 w-5" />} label={t("easySizeExchange")} />
             </div>
           </div>
-          {/* Hero image */}
-          <div className="image-overflow order-first aspect-square w-full max-w-sm overflow-hidden rounded-3xl bg-background shadow-xl sm:max-w-md md:order-none md:flex-1">
+          <div className="relative order-first aspect-square overflow-hidden rounded-3xl bg-background shadow-xl md:order-none">
             <img
               src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=1200&q=80"
               alt="Comfortable shoes"
@@ -87,26 +66,21 @@ function HomePage() {
         </div>
       </section>
 
-      {/* Shop by Category - Men & Women only */}
-      <section className="mx-auto max-w-7xl px-4 py-10">
-        <SectionTitle title={t("shopByCategory")} subtitle={t("shopByCategorySub")} isUrdu={isUrdu} />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      {/* Shop by Category — Men & Women only */}
+      <section className="mx-auto max-w-7xl px-4 py-12">
+        <SectionTitle title={t("shopByCategory")} subtitle={t("shopByCategorySub")} />
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           {categories.map((c) => (
             <Link key={c.to} to={c.to} className="group relative overflow-hidden rounded-3xl bg-secondary">
-              <div className="image-overflow aspect-[4/3] overflow-hidden">
+              <div className="aspect-[4/3]">
                 <img
                   src={c.img}
                   alt={t(c.titleKey)}
                   className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                 />
               </div>
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-4 sm:p-6">
-                <div
-                  className={`category-card-title font-extrabold text-white ${isUrdu ? "text-xl sm:text-2xl" : "text-2xl sm:text-3xl"
-                    }`}
-                >
-                  {t(c.titleKey)}
-                </div>
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-6">
+                <div className="text-2xl font-extrabold text-white sm:text-3xl">{t(c.titleKey)}</div>
                 <div className="mt-2 inline-block rounded-full bg-white/20 px-4 py-1.5 text-sm font-bold text-white backdrop-blur-sm">
                   {t("shopNowArrow")}
                 </div>
@@ -117,10 +91,10 @@ function HomePage() {
       </section>
 
       {/* Best Sellers */}
-      <section className="bg-secondary/40 py-10">
+      <section className="bg-secondary/40 py-12">
         <div className="mx-auto max-w-7xl px-4">
-          <SectionTitle title={t("bestSellers")} subtitle={t("bestSellersSub")} isUrdu={isUrdu} />
-          <div className="product-grid-2col grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
+          <SectionTitle title={t("bestSellers")} subtitle={t("bestSellersSub")} />
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
             {bestSellers.map((p) => (
               <ProductCard key={p.id} product={p} />
             ))}
@@ -129,9 +103,9 @@ function HomePage() {
       </section>
 
       {/* How to Order */}
-      <section className="mx-auto max-w-7xl px-4 py-12">
-        <SectionTitle title={t("howToOrder")} subtitle={t("howToOrderSub")} isUrdu={isUrdu} />
-        <div className="grid gap-4 md:grid-cols-3">
+      <section className="mx-auto max-w-7xl px-4 py-14">
+        <SectionTitle title={t("howToOrder")} subtitle={t("howToOrderSub")} />
+        <div className="grid gap-6 md:grid-cols-3">
           <Step n={1} title={t("step1Title")} text={t("step1Text")} />
           <Step n={2} title={t("step2Title")} text={t("step2Text")} />
           <Step n={3} title={t("step3Title")} text={t("step3Text")} />
@@ -139,10 +113,10 @@ function HomePage() {
       </section>
 
       {/* Why Trust Us */}
-      <section className="bg-secondary/40 py-10">
+      <section className="bg-secondary/40 py-12">
         <div className="mx-auto max-w-7xl px-4">
-          <SectionTitle title={t("whyTrustUs")} isUrdu={isUrdu} />
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <SectionTitle title={t("whyTrustUs")} />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <TrustCard icon={<ShieldCheck className="h-6 w-6" />} title={t("trustOriginalQuality")} text={t("trustOriginalQualityText")} />
             <TrustCard icon={<Wallet className="h-6 w-6" />} title={t("trustCOD")} text={t("trustCODText")} />
             <TrustCard icon={<RefreshCw className="h-6 w-6" />} title={t("trustExchange")} text={t("trustExchangeText")} />
@@ -152,8 +126,8 @@ function HomePage() {
       </section>
 
       {/* Reviews */}
-      <section className="mx-auto max-w-7xl px-4 py-10">
-        <SectionTitle title={t("customerReviews")} subtitle={t("customerReviewsSub")} isUrdu={isUrdu} />
+      <section className="mx-auto max-w-7xl px-4 py-12">
+        <SectionTitle title={t("customerReviews")} subtitle={t("customerReviewsSub")} />
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {reviews.map((r, i) => (
             <div key={i} className="rounded-2xl border border-border bg-card p-5">
@@ -163,29 +137,24 @@ function HomePage() {
                 ))}
               </div>
               <p className="text-sm text-foreground">{r.text}</p>
-              <div className="mt-3 text-xs font-semibold text-muted-foreground">- {r.name}, {r.city}</div>
+              <div className="mt-3 text-xs font-semibold text-muted-foreground">— {r.name}, {r.city}</div>
             </div>
           ))}
         </div>
       </section>
 
       {/* WhatsApp Help */}
-      <section className="bg-primary py-10 text-primary-foreground">
+      <section className="bg-primary py-12 text-primary-foreground">
         <div className="mx-auto max-w-3xl px-4 text-center">
-          <h2
-            className={`font-extrabold ${isUrdu ? "text-xl sm:text-2xl leading-[1.8]" : "text-2xl sm:text-3xl"
-              }`}
-          >
-            {t("needHelpSize")}
-          </h2>
+          <h2 className="text-2xl font-extrabold sm:text-3xl">{t("needHelpSize")}</h2>
           <p className="mt-3 text-primary-foreground/80">{t("needHelpSizeText")}</p>
           <a
             href={`https://wa.me/${siteConfig.whatsapp}?text=${encodeURIComponent(t("waHelpMsg"))}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-whatsapp px-5 py-3 text-base font-bold text-whatsapp-foreground hover:opacity-90"
+            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-whatsapp px-6 py-4 text-base font-bold text-whatsapp-foreground hover:opacity-90"
           >
-            <MessageCircle className="h-5 w-5 flex-shrink-0" />
+            <MessageCircle className="h-5 w-5" />
             {t("chatOnWhatsApp")}
           </a>
         </div>
@@ -194,27 +163,20 @@ function HomePage() {
   );
 }
 
-function SectionTitle({ title, subtitle, isUrdu }: { title: string; subtitle?: string; isUrdu?: boolean }) {
+function SectionTitle({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <div className={`mb-6 ${isUrdu ? "text-right" : "text-center"} sm:mb-8`}>
-      <h2
-        className={`section-title font-extrabold text-foreground ${isUrdu ? "text-xl sm:text-2xl md:text-3xl" : "text-2xl sm:text-3xl"
-          }`}
-      >
-        {title}
-      </h2>
-      {subtitle && (
-        <p className="mt-2 text-sm text-muted-foreground sm:text-base">{subtitle}</p>
-      )}
+    <div className="mb-6 text-center sm:mb-8">
+      <h2 className="text-2xl font-extrabold text-foreground sm:text-3xl">{title}</h2>
+      {subtitle && <p className="mt-2 text-sm text-muted-foreground sm:text-base">{subtitle}</p>}
     </div>
   );
 }
 
 function TrustPoint({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
-    <div className="trust-point flex items-start gap-2 rounded-xl bg-background/80 px-3 py-2.5 text-sm font-medium text-foreground">
-      <span className="mt-0.5 flex-shrink-0 text-primary">{icon}</span>
-      <span>{label}</span>
+    <div className="flex items-center gap-2 rounded-xl bg-background/80 px-3 py-2 text-sm font-medium text-foreground">
+      <span className="text-primary">{icon}</span>
+      {label}
     </div>
   );
 }
@@ -233,12 +195,12 @@ function TrustCard({ icon, title, text }: { icon: React.ReactNode; title: string
 
 function Step({ n, title, text }: { n: number; title: string; text: string }) {
   return (
-    <div className="step-card rounded-2xl border border-border bg-card p-5 text-center">
-      <div className="step-number mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-accent text-xl font-extrabold text-accent-foreground">
+    <div className="relative rounded-2xl border border-border bg-card p-6 text-center">
+      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-2xl font-extrabold text-accent-foreground">
         {n}
       </div>
-      <div className="text-base font-bold text-foreground">{title}</div>
-      <div className="mt-1.5 text-sm text-muted-foreground">{text}</div>
+      <div className="text-lg font-bold text-foreground">{title}</div>
+      <div className="mt-2 text-sm text-muted-foreground">{text}</div>
     </div>
   );
 }

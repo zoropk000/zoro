@@ -16,32 +16,27 @@ import { CartProvider } from "@/lib/cart-context";
 import { LanguageProvider, useLanguage } from "@/lib/language-context";
 
 function NotFoundComponent() {
-  const { t, lang } = useLanguage();
-  const isUrdu = lang === "ur";
+  const { t } = useLanguage();
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className={`max-w-md ${isUrdu ? "text-right" : "text-center"}`}>
-        <h1 className="text-7xl font-bold text-foreground" dir="ltr">404</h1>
-        <h2
-          className={`mt-4 font-semibold text-foreground ${
-            isUrdu ? "text-xl sm:text-2xl leading-[1.8]" : "text-2xl"
-          }`}
-        >
+      <div className="max-w-md text-center">
+        <h1 className="text-7xl font-bold text-foreground">404</h1>
+        <h2 className="mt-4 text-2xl font-semibold text-foreground">
           {t("notFoundTitle")}
         </h2>
-        <p className="mt-2 text-sm text-muted-foreground">{t("notFoundText")}</p>
-        <div className={`mt-6 flex flex-wrap gap-2 ${isUrdu ? "justify-end" : "justify-center"}`}>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {t("notFoundText")}
+        </p>
+        <div className="mt-6 flex flex-wrap justify-center gap-2">
           <Link
             to="/"
             className="inline-flex items-center justify-center rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground"
-            style={{ minHeight: "48px" }}
           >
             {t("goToHome")}
           </Link>
           <Link
             to="/shop"
             className="inline-flex items-center justify-center rounded-lg border border-border bg-background px-5 py-3 text-sm font-semibold"
-            style={{ minHeight: "48px" }}
           >
             {t("shopShoesLink")}
           </Link>
@@ -54,7 +49,6 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
-  const { t } = useLanguage();
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
@@ -63,10 +57,10 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          {t("somethingWentWrong")}
+          Something went wrong
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          {t("tryAgainText")}
+          Please try again, or head back home.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
@@ -75,16 +69,11 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
               reset();
             }}
             className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-            style={{ minHeight: "44px" }}
           >
-            {t("tryAgain")}
+            Try again
           </button>
-          <a
-            href="/"
-            className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-semibold"
-            style={{ minHeight: "44px", display: "inline-flex", alignItems: "center" }}
-          >
-            {t("goHome")}
+          <a href="/" className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-semibold">
+            Go home
           </a>
         </div>
       </div>
