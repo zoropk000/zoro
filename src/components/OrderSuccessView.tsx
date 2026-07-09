@@ -3,9 +3,23 @@ import { CheckCircle2, MessageCircle } from "lucide-react";
 import { Layout } from "@/components/Layout";
 import { siteConfig } from "@/config/siteConfig";
 import { useLanguage } from "@/lib/language-context";
+import { useQuery } from "@tanstack/react-query";
+import { trackOrder } from "@/services/orderService";
 
 export function OrderSuccessView({ orderNumber }: { orderNumber?: string }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+
+  const recentOrders = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("recentOrders") || "[]") : [];
+  const matched = recentOrders.find((o: any) => o.orderNumber === orderNumber);
+  const phone = matched?.phone || "";
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["success-order", orderNumber, phone],
+    queryFn: () => trackOrder(orderNumber || "", phone),
+    enabled: !!orderNumber && !!phone,
+  });
+
+  const order = data?.order;
 
   return (
     <Layout>
@@ -16,16 +30,87 @@ export function OrderSuccessView({ orderNumber }: { orderNumber?: string }) {
         <h1 className="text-3xl font-extrabold">{t("orderPlaced")}</h1>
         <p className="mt-2 text-muted-foreground">{t("orderPlacedThank")}</p>
 
-        {orderNumber ? (
-          <div className="mt-6 space-y-4 rounded-2xl border border-border bg-card p-6 text-left">
-            <InfoRow label={t("orderNumber")} value={`#${orderNumber}`} big />
+        <div className="mx-auto mt-6 max-w-md rounded-2xl bg-primary/10 border border-primary/20 p-5 text-sm font-semibold text-primary shadow-sm">
+          {t("checkEmailNotification")}
+        </div>
+
+        <div className="mt-6 space-y-4 rounded-2xl border border-border bg-card p-6 text-left">
+          <InfoRow label={t("orderNumber")} value={orderNumber ? `#${orderNumber}` : "-"} big />
+          {isLoading ? (
+            <p className="text-sm text-muted-foreground">{t("loadingOrder")}</p>
+          ) : order ? (
+            <div className="space-y-4 border-t border-border pt-4">
+              <div>
+                <span className="text-xs font-semibold uppercase text-muted-foreground">
+                  {t("emailAddressLabel")}
+                </span>
+                <p className="text-sm font-bold text-foreground mt-1">
+                  {t("emailSentTo")}: <span className="text-primary">{order.customer.email}</span>
+                </p>
+              </div>
+
+              <div>
+                <span className="text-xs font-semibold uppercase text-muted-foreground">
+                  {t("recentStatusLabel")}
+                </span>
+                <div className="text-base font-bold text-foreground flex items-center gap-2 mt-1">
+                  {order.orderStatus === "pending" ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1 text-sm font-bold text-amber-600">
+                      ⏳ {t("statusWaitingConfirm")}
+                    </span>
+                  ) : order.orderStatus === "confirmed" ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-sm font-bold text-emerald-600">
+                      ✅ {t("statusConfirmed")}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-sm font-bold text-primary">
+                      {order.orderStatus}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <span className="text-xs font-semibold uppercase text-muted-foreground">
+                  {t("deliveryEstimateLabel")}
+                </span>
+                {order.orderStatus === "pending" ? (
+                  <p className="text-sm font-medium text-muted-foreground mt-1">
+                    {t("confirmTimeConfirmingShort")}
+                  </p>
+                ) : order.deliveryEstimate && order.deliveryEstimate.minDays ? (
+                  <div className="mt-1">
+                    <p className="text-base font-bold text-foreground">
+                      {order.deliveryEstimate.minDays}–{order.deliveryEstimate.maxDays} {t("workingDaysLabel")}
+                    </p>
+                    {order.deliveryEstimate.estimatedStartDate && (
+                      <p className="text-sm text-muted-foreground">
+                        {t("expectedBetweenLabel")}:{" "}
+                        <span className="font-semibold text-foreground">
+                          {new Date(order.deliveryEstimate.estimatedStartDate).toLocaleDateString(
+                            lang === "ur" ? "ur-PK" : "en-GB",
+                            { day: "numeric", month: "long" }
+                          )}{" "}
+                          –{" "}
+                          {new Date(order.deliveryEstimate.estimatedEndDate).toLocaleDateString(
+                            lang === "ur" ? "ur-PK" : "en-GB",
+                            { day: "numeric", month: "long" }
+                          )}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm font-medium text-muted-foreground mt-1">
+                    {t("confirmTimeConfirmingShort")}
+                  </p>
+                )}
+              </div>
+            </div>
+          ) : (
             <p className="text-sm text-muted-foreground">{t("orderSaved")}</p>
-          </div>
-        ) : (
-          <div className="mt-6 rounded-2xl border border-border bg-card p-6 text-sm text-muted-foreground">
-            {t("orderSaved")}
-          </div>
-        )}
+          )}
+        </div>
 
         <div className="mt-8 rounded-2xl bg-secondary p-6 text-left">
           <h3 className="mb-3 text-lg font-bold">{t("whatHappensNext")}</h3>

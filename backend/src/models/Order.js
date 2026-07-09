@@ -19,6 +19,7 @@ const orderSchema = new mongoose.Schema(
     customer: {
       name: { type: String, required: true, trim: true },
       phone: { type: String, required: true, trim: true, index: true },
+      email: { type: String, trim: true, default: "" },
       city: { type: String, required: true, trim: true },
       address: { type: String, required: true, trim: true },
       landmark: { type: String, trim: true, default: "" },
@@ -39,11 +40,61 @@ const orderSchema = new mongoose.Schema(
     },
     orderStatus: {
       type: String,
-      enum: ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"],
+      enum: ["pending", "confirmed", "preparing", "processing", "shipped", "out_for_delivery", "delivered", "cancelled"],
       default: "pending",
     },
     notes: { type: String, trim: true, default: "" },
+    paymentProof: {
+      url: { type: String, default: "" },
+      publicId: { type: String, default: "" },
+      uploadedAt: { type: Date, default: null },
+    },
     inventoryReduced: { type: Boolean, default: true },
+    deliveryEstimate: {
+      minDays: { type: Number, default: null },
+      maxDays: { type: Number, default: null },
+      estimatedStartDate: { type: Date, default: null },
+      estimatedEndDate: { type: Date, default: null },
+    },
+    confirmedAt: { type: Date, default: null },
+    trackingStartedAt: { type: Date, default: null },
+    trackingEvents: [
+      {
+        status: { type: String, required: true },
+        title: { type: String, required: true },
+        titleUrdu: { type: String, required: true },
+        description: { type: String, required: true },
+        descriptionUrdu: { type: String, required: true },
+        timestamp: { type: Date, default: Date.now },
+      },
+    ],
+    emailStatus: {
+      orderReceived: {
+        sent: { type: Boolean, default: false },
+        sentAt: { type: Date, default: null },
+        error: { type: String, default: null },
+      },
+      orderConfirmed: {
+        sent: { type: Boolean, default: false },
+        sentAt: { type: Date, default: null },
+        error: { type: String, default: null },
+      },
+      shipped: {
+        sent: { type: Boolean, default: false },
+        sentAt: { type: Date, default: null },
+        error: { type: String, default: null },
+      },
+      out_for_delivery: {
+        sent: { type: Boolean, default: false },
+        sentAt: { type: Date, default: null },
+        error: { type: String, default: null },
+      },
+      delivered: {
+        sent: { type: Boolean, default: false },
+        sentAt: { type: Date, default: null },
+        error: { type: String, default: null },
+      },
+    },
   },
   { timestamps: true },
 );

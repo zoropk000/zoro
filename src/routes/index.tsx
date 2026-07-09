@@ -17,6 +17,9 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
+import { useState, useEffect } from "react";
+import { trackOrder } from "@/services/orderService";
+
 export const Route = createFileRoute("/")({
   component: HomePage,
 });
@@ -33,6 +36,26 @@ function HomePage() {
   });
   const bestSellers = data?.products || [];
 
+  const [lastOrder, setLastOrder] = useState<{ orderNumber: string; phone: string } | null>(null);
+  useEffect(() => {
+    try {
+      const recentOrders = JSON.parse(localStorage.getItem("recentOrders") || "[]");
+      if (recentOrders && recentOrders.length > 0) {
+        setLastOrder(recentOrders[recentOrders.length - 1]);
+      }
+    } catch (err) {
+      console.error("Failed to load recent orders", err);
+    }
+  }, []);
+
+  const recentOrderQuery = useQuery({
+    queryKey: ["home-recent-order", lastOrder?.orderNumber, lastOrder?.phone],
+    queryFn: () => trackOrder(lastOrder?.orderNumber || "", lastOrder?.phone || ""),
+    enabled: !!lastOrder,
+  });
+
+  const orderDetails = recentOrderQuery.data?.order;
+
   const categories = [
     {
       titleKey: "menShoes" as const,
@@ -48,6 +71,53 @@ function HomePage() {
 
   return (
     <Layout>
+      {/* Recent Order Tracking Card */}
+      {orderDetails && (
+        <div className="mx-auto max-w-7xl px-4 pt-6">
+          <div className="rounded-3xl border border-primary/20 bg-primary/5 p-6 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 transition duration-300 hover:shadow-md">
+            <div className="space-y-1">
+              <h2 className="text-xl font-extrabold text-foreground flex items-center gap-2">
+                {t("recentOrdersCardTitle")}
+              </h2>
+              <p className="text-sm text-muted-foreground">{t("recentOrdersCardSubtitle")}</p>
+              <div className="flex flex-wrap gap-x-6 gap-y-1 mt-2 text-sm">
+                <div>
+                  <span className="font-semibold text-muted-foreground">{t("recentOrderNumberLabel")}:</span>{" "}
+                  <span className="font-extrabold text-foreground">#{orderDetails.orderNumber}</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-muted-foreground">{t("recentStatusLabel")}:</span>{" "}
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">
+                    {orderDetails.orderStatus === "pending"
+                      ? t("statusWaitingConfirm")
+                      : orderDetails.orderStatus === "confirmed"
+                        ? t("statusConfirmed")
+                        : orderDetails.orderStatus === "preparing" || orderDetails.orderStatus === "processing"
+                          ? t("statusPrepared")
+                          : orderDetails.orderStatus === "shipped"
+                            ? t("statusShipped")
+                            : orderDetails.orderStatus === "out_for_delivery"
+                              ? t("statusOutForDelivery")
+                              : orderDetails.orderStatus === "delivered"
+                                ? t("statusDelivered")
+                                : orderDetails.orderStatus === "cancelled"
+                                  ? t("statusCancelled")
+                                  : orderDetails.orderStatus}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <Link
+              to="/track-order"
+              search={{ orderNumber: orderDetails.orderNumber, phone: lastOrder?.phone }}
+              className="w-full sm:w-auto text-center shrink-0 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground hover:bg-primary/90 transition shadow-sm"
+            >
+              {t("recentOrdersTrackBtn")}
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Hero */}
       <section className="bg-secondary/50">
         <div className="mx-auto grid max-w-7xl items-center gap-8 px-4 py-10 sm:py-16 md:grid-cols-2">

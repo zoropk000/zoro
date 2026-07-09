@@ -31,7 +31,7 @@ export type ProductPayload = {
 export type AdminOrder = {
   _id: string;
   orderNumber: string;
-  customer: { name: string; phone: string; city: string; address: string; landmark?: string };
+  customer: { name: string; phone: string; email?: string; city: string; address: string; landmark?: string };
   items: {
     product: string;
     name: string;
@@ -48,6 +48,29 @@ export type AdminOrder = {
   paymentStatus: string;
   orderStatus: string;
   createdAt: string;
+  confirmedAt?: string;
+  trackingStartedAt?: string;
+  deliveryEstimate?: {
+    minDays: number;
+    maxDays: number;
+    estimatedStartDate: string;
+    estimatedEndDate: string;
+  };
+  trackingEvents?: {
+    status: string;
+    title: string;
+    titleUrdu: string;
+    description: string;
+    descriptionUrdu: string;
+    timestamp: string;
+  }[];
+  emailStatus?: {
+    orderReceived: { sent: boolean; sentAt: string | null; error: string | null };
+    orderConfirmed: { sent: boolean; sentAt: string | null; error: string | null };
+    shipped: { sent: boolean; sentAt: string | null; error: string | null };
+    out_for_delivery: { sent: boolean; sentAt: string | null; error: string | null };
+    delivered: { sent: boolean; sentAt: string | null; error: string | null };
+  };
 };
 
 type Pagination = { page: number; pages: number; total: number; limit: number };
@@ -146,6 +169,18 @@ export const adminApi = {
         body: JSON.stringify({ status }),
       },
     );
+  },
+  confirmOrder(id: string, minDeliveryDays: number, maxDeliveryDays: number) {
+    return apiRequest<{ success: true; order: AdminOrder }>(`/admin/orders/${id}/confirm`, {
+      method: "PATCH",
+      body: JSON.stringify({ minDeliveryDays, maxDeliveryDays }),
+    });
+  },
+  resendEmail(id: string, emailType: string) {
+    return apiRequest<{ success: true; order: AdminOrder }>(`/admin/orders/${id}/resend-email`, {
+      method: "POST",
+      body: JSON.stringify({ emailType }),
+    });
   },
   dashboard<T = unknown>(path: string) {
     return apiRequest<T>(`/admin/dashboard/${path}`);

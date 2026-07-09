@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Search, ShoppingCart, Globe } from "lucide-react";
+import { Search, ShoppingCart, Globe, Package } from "lucide-react";
 import { siteConfig } from "@/config/siteConfig";
 import { useCart } from "@/lib/cart-context";
 import { useLanguage } from "@/lib/language-context";
@@ -59,6 +59,16 @@ export function Header() {
             >
               <Search className="h-4 w-4" />
               {t("searchPlaceholder")}
+            </Link>
+
+            {/* Track Order */}
+            <Link
+              to="/track-order"
+              className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-semibold text-foreground hover:bg-secondary transition"
+              aria-label="Track Order"
+            >
+              <Package className="h-4 w-4 text-primary" />
+              <span className="hidden sm:inline">{t("trackOrder")}</span>
             </Link>
 
             {/* Language Toggle */}

@@ -5,9 +5,10 @@ import { useCart } from "@/lib/cart-context";
 import { formatPKR } from "@/lib/currency";
 import { calcDeliveryFee } from "@/lib/orders";
 import { createOrder } from "@/services/orderService";
+import { API_BASE_URL } from "@/services/api";
 import { pakistaniCities } from "@/data/cities";
 import { validatePakistaniPhone, normalizePhone } from "@/lib/validation";
-import { Lock, Phone, ShieldCheck, Wallet, X } from "lucide-react";
+import { Lock, Mail, Phone, ShieldCheck, Wallet, X } from "lucide-react";
 import { useLanguage } from "@/lib/language-context";
 import { toast } from "sonner";
 
@@ -16,7 +17,7 @@ export const Route = createFileRoute("/checkout")({
   component: CheckoutPage,
 });
 
-type Errors = Partial<Record<"name" | "phone" | "city" | "cityOther" | "address", string>>;
+type Errors = Partial<Record<"name" | "phone" | "email" | "city" | "cityOther" | "address", string>>;
 
 function CheckoutPage() {
   const { lines, subtotal, clearCart, isLoading } = useCart();
@@ -27,6 +28,7 @@ function CheckoutPage() {
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [city, setCity] = useState("");
   const [cityOther, setCityOther] = useState("");
   const [address, setAddress] = useState("");
@@ -35,6 +37,8 @@ function CheckoutPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [submitting, setSubmitting] = useState(false);
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [emailPopup, setEmailPopup] = useState<{ orderNumber: string; email: string } | null>(null);
 
   useEffect(() => {
     if (!isLoading && lines.length === 0) {
@@ -47,6 +51,13 @@ function CheckoutPage() {
     if (!name.trim()) e.name = t("errName");
     if (!phone.trim()) e.phone = t("errPhone");
     else if (!validatePakistaniPhone(phone)) e.phone = t("errPhoneInvalid");
+    
+    if (!email.trim()) {
+      e.email = t("errEmail");
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      e.email = t("errEmail");
+    }
+
     if (!city) e.city = t("errCity");
     if (city === "Other" && !cityOther.trim()) e.cityOther = t("errCityOther");
     if (!address.trim()) e.address = t("errAddress");
@@ -65,6 +76,7 @@ function CheckoutPage() {
         customer: {
           name: name.trim(),
           phone: normalizePhone(phone),
+          email: email.trim().toLowerCase(),
           city: city === "Other" ? cityOther.trim() : city,
           address: address.trim(),
           landmark: landmark.trim() || undefined,
@@ -76,12 +88,41 @@ function CheckoutPage() {
         })),
         paymentMethod: paymentMethod as "cod" | "easypaisa" | "meezan",
       });
+
+      // Save recent order reference to LocalStorage
+      try {
+        const recentOrders = JSON.parse(localStorage.getItem("recentOrders") || "[]");
+        recentOrders.push({
+          orderNumber: response.order.orderNumber,
+          phone: normalizePhone(phone),
+        });
+        localStorage.setItem("recentOrders", JSON.stringify(recentOrders));
+      } catch (err) {
+        console.error("Failed to write recentOrders to LocalStorage", err);
+      }
+
       clearCart();
       setShowConfirm(false);
-      toast.success(t("orderPlaced"));
-      navigate({
-        to: "/order-success/$orderNumber",
-        params: { orderNumber: response.order.orderNumber },
+
+      // Upload payment proof screenshot if provided
+      const createdOrderNumber = response.order.orderNumber;
+      if (proofFile && (paymentMethod === "easypaisa" || paymentMethod === "meezan")) {
+        try {
+          const formData = new FormData();
+          formData.append("proof", proofFile);
+          await fetch(
+            `${API_BASE_URL}/orders/${createdOrderNumber}/payment-proof`,
+            { method: "POST", body: formData }
+          );
+        } catch (err) {
+          console.warn("Payment proof upload failed:", err);
+        }
+      }
+
+      // Show the email confirmation popup instead of immediately navigating
+      setEmailPopup({
+        orderNumber: createdOrderNumber,
+        email: email.trim().toLowerCase(),
       });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("orderFailed"));
@@ -132,6 +173,16 @@ function CheckoutPage() {
               type="tel"
               inputMode="tel"
               autoComplete="tel"
+            />
+            <Field
+              label={t("emailAddressLabel")}
+              value={email}
+              onChange={setEmail}
+              placeholder={t("emailAddressPlaceholder")}
+              error={errors.email}
+              type="email"
+              inputMode="email"
+              autoComplete="email"
             />
             <div>
               <label className="mb-1 block text-sm font-semibold">{t("city")}</label>
@@ -264,8 +315,12 @@ function CheckoutPage() {
                   <input
                     type="file"
                     accept="image/*"
+                    onChange={(e) => setProofFile(e.target.files?.[0] ?? null)}
                     className="w-full text-sm file:mr-4 file:rounded-full file:border-0 file:bg-primary/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20"
                   />
+                  {proofFile && (
+                    <p className="mt-1 text-xs font-semibold text-emerald-600">✅ {proofFile.name}</p>
+                  )}
                 </div>
               </div>
             )}
@@ -291,8 +346,12 @@ function CheckoutPage() {
                   <input
                     type="file"
                     accept="image/*"
+                    onChange={(e) => setProofFile(e.target.files?.[0] ?? null)}
                     className="w-full text-sm file:mr-4 file:rounded-full file:border-0 file:bg-primary/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20"
                   />
+                  {proofFile && (
+                    <p className="mt-1 text-xs font-semibold text-emerald-600">✅ {proofFile.name}</p>
+                  )}
                 </div>
               </div>
             )}
@@ -374,6 +433,63 @@ function CheckoutPage() {
               >
                 {t("changeDetails")}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Email Confirmation Popup ── */}
+      {emailPopup && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="relative w-full max-w-md animate-in fade-in zoom-in-95 duration-200">
+            <div className="overflow-hidden rounded-3xl bg-background shadow-2xl border border-border">
+              {/* Top accent bar */}
+              <div className="h-2 w-full bg-gradient-to-r from-primary via-primary/80 to-primary/60" />
+
+              <div className="p-8 text-center">
+                {/* Icon */}
+                <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
+                  <Mail className="h-10 w-10 text-primary" />
+                </div>
+
+                {/* Title */}
+                <h2 className="text-2xl font-extrabold text-foreground">
+                  🎉 {t("orderPlaced")}
+                </h2>
+
+                {/* Order number badge */}
+                <div className="mx-auto mt-4 inline-block rounded-2xl bg-primary/10 px-5 py-3">
+                  <div className="text-xs font-bold uppercase tracking-widest text-primary/70">
+                    {t("orderNumber")}
+                  </div>
+                  <div className="mt-1 text-2xl font-black tracking-wider text-primary">
+                    #{emailPopup.orderNumber}
+                  </div>
+                </div>
+
+                {/* Email message */}
+                <p className="mt-5 text-base font-semibold leading-relaxed text-foreground">
+                  {t("checkEmailNotification")}
+                </p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {t("emailSentTo")}:{" "}
+                  <span className="font-bold text-primary">{emailPopup.email}</span>
+                </p>
+
+                {/* CTA button */}
+                <button
+                  onClick={() => {
+                    navigate({
+                      to: "/order-success/$orderNumber",
+                      params: { orderNumber: emailPopup.orderNumber },
+                    });
+                    setEmailPopup(null);
+                  }}
+                  className="mt-8 w-full rounded-2xl bg-primary py-4 text-base font-extrabold text-primary-foreground shadow-lg transition hover:bg-primary/90 active:scale-95"
+                >
+                  {t("trackMyOrder")} →
+                </button>
+              </div>
             </div>
           </div>
         </div>

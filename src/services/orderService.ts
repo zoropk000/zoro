@@ -4,6 +4,7 @@ export type CreateOrderPayload = {
   customer: {
     name: string;
     phone: string;
+    email: string;
     city: string;
     address: string;
     landmark?: string;
@@ -23,6 +24,7 @@ export type TrackedOrder = {
   customer: {
     name: string;
     phone: string;
+    email?: string;
     city: string;
     address: string;
     landmark?: string;
@@ -40,7 +42,21 @@ export type TrackedOrder = {
   total: number;
   paymentMethod: "cod" | "easypaisa_jazzcash" | "meezan_bank";
   paymentStatus: string;
-  orderStatus: "pending" | "confirmed" | "processing" | "shipped" | "delivered" | "cancelled";
+  orderStatus: "pending" | "confirmed" | "preparing" | "processing" | "shipped" | "out_for_delivery" | "delivered" | "cancelled";
+  deliveryEstimate?: {
+    minDays: number;
+    maxDays: number;
+    estimatedStartDate: string;
+    estimatedEndDate: string;
+  };
+  trackingEvents?: {
+    status: string;
+    title: string;
+    titleUrdu: string;
+    description: string;
+    descriptionUrdu: string;
+    timestamp: string;
+  }[];
 };
 
 export async function createOrder(payload: CreateOrderPayload) {

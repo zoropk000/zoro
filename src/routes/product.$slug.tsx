@@ -114,7 +114,7 @@ function ProductPage() {
       label: t("productDetails"),
       body: (
         <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
-          {(lang === "ur" && product.descriptionUr
+          {(lang === "ur" && product.descriptionUrdu
             ? product.descriptionUrdu
             : product.description
           ).map((d: string, i: number) => (
