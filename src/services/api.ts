@@ -1,6 +1,26 @@
-const localApiUrl = ["http://localhost", "5000"].join(":") + "/api";
-const fallbackApiUrl = import.meta.env.DEV ? localApiUrl : "/api";
 const configuredApiUrl = import.meta.env.VITE_API_URL;
+
+function trimTrailingSlash(value: string) {
+  return value.replace(/\/$/, "");
+}
+
+function withApiPath(value: string) {
+  const normalized = trimTrailingSlash(value);
+  return normalized.endsWith("/api") ? normalized : `${normalized}/api`;
+}
+
+function getServerApiUrl() {
+  const explicit = process.env.VITE_API_URL;
+  if (explicit?.startsWith("http")) return trimTrailingSlash(explicit);
+
+  const frontendUrl = process.env.FRONTEND_URL;
+  if (frontendUrl) return withApiPath(frontendUrl);
+
+  const vercelUrl = process.env.VERCEL_URL;
+  if (vercelUrl) return withApiPath(`https://${vercelUrl}`);
+
+  return ["http://localhost", "5000"].join(":") + "/api";
+}
 
 function isLoopbackApiUrl(value: string | undefined) {
   if (!value || !import.meta.env.PROD) return false;
@@ -12,9 +32,17 @@ function isLoopbackApiUrl(value: string | undefined) {
   }
 }
 
-const API_BASE_URL = (
-  isLoopbackApiUrl(configuredApiUrl) ? fallbackApiUrl : configuredApiUrl || fallbackApiUrl
-).replace(/\/$/, "");
+const fallbackApiUrl = import.meta.env.DEV
+  ? ["http://localhost", "5000"].join(":") + "/api"
+  : "/api";
+
+const API_BASE_URL = trimTrailingSlash(
+  import.meta.env.SSR
+    ? getServerApiUrl()
+    : isLoopbackApiUrl(configuredApiUrl)
+      ? fallbackApiUrl
+      : configuredApiUrl || fallbackApiUrl,
+);
 
 type ApiOptions = RequestInit & { skipJson?: boolean };
 
