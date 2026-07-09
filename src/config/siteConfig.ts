@@ -1,8 +1,8 @@
 export const siteConfig = {
   brandName: "ZORO",
   tagline: "Comfortable shoes, delivered anywhere in Pakistan.",
-  phone: "+92 300 1234567",
-  whatsapp: "923001234567",
+  phone: "+92 317 0363100",
+  whatsapp: "923170363100",
   email: "support@stepstyle.pk",
   deliveryFee: 250,
   freeDeliveryThreshold: 8000,
