@@ -13,6 +13,16 @@ function getConnection() {
   return connectionPromise;
 }
 
+function sendJson(res, statusCode, payload) {
+  if (typeof res.status === "function") {
+    return res.status(statusCode).json(payload);
+  }
+
+  res.statusCode = statusCode;
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  return res.end(JSON.stringify(payload));
+}
+
 export default async function handler(req, res) {
   try {
     if (req.method === "OPTIONS" || req.url?.startsWith("/api/health")) {
@@ -23,7 +33,7 @@ export default async function handler(req, res) {
     return app(req, res);
   } catch (error) {
     console.error("Database connection failed:", error.message);
-    return res.status(500).json({
+    return sendJson(res, 500, {
       success: false,
       message: "Database connection failed",
     });

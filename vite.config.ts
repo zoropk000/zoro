@@ -12,6 +12,11 @@ export default defineConfig({
   nitro: {
     preset: "vercel",
     handlers: [
+      { route: "/api/health", handler: apiHandler, format: "node" },
+      { route: "/api/products", handler: apiHandler, format: "node" },
+      { route: "/api/products/men", handler: apiHandler, format: "node" },
+      { route: "/api/products/women", handler: apiHandler, format: "node" },
+      { route: "/api/products/:slug", handler: apiHandler, format: "node" },
       { route: "/api/admin/auth/login", handler: apiHandler, format: "node" },
       { route: "/api/admin/auth/logout", handler: apiHandler, format: "node" },
       { route: "/api/admin/auth/me", handler: apiHandler, format: "node" },
@@ -40,6 +45,7 @@ export default defineConfig({
       { route: "/api/admin/upload/**", handler: apiHandler, format: "node" },
       { route: "/api/admin/**", handler: apiHandler, format: "node" },
       { route: "/api/orders/**", handler: apiHandler, format: "node" },
+      { route: "/api/products/**", handler: apiHandler, format: "node" },
       { route: "/api/**", handler: apiHandler, format: "node" },
     ],
     vercel: {
