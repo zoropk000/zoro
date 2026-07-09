@@ -12,6 +12,13 @@ export default defineConfig({
   nitro: {
     preset: "vercel",
     handlers: [
+      { route: "/api/admin/auth/login", handler: apiHandler, format: "node" },
+      { route: "/api/admin/auth/logout", handler: apiHandler, format: "node" },
+      { route: "/api/admin/auth/me", handler: apiHandler, format: "node" },
+      { route: "/api/admin/dashboard/**", handler: apiHandler, format: "node" },
+      { route: "/api/admin/orders/**", handler: apiHandler, format: "node" },
+      { route: "/api/admin/products/**", handler: apiHandler, format: "node" },
+      { route: "/api/admin/upload/**", handler: apiHandler, format: "node" },
       { route: "/api/admin/**", handler: apiHandler, format: "node" },
       { route: "/api/orders/**", handler: apiHandler, format: "node" },
       { route: "/api/**", handler: apiHandler, format: "node" },
