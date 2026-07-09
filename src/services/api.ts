@@ -1,7 +1,20 @@
-const API_BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:5000/api").replace(
-  /\/$/,
-  "",
-);
+const localApiUrl = ["http://localhost", "5000"].join(":") + "/api";
+const fallbackApiUrl = import.meta.env.DEV ? localApiUrl : "/api";
+const configuredApiUrl = import.meta.env.VITE_API_URL;
+
+function isLoopbackApiUrl(value: string | undefined) {
+  if (!value || !import.meta.env.PROD) return false;
+  try {
+    const url = new URL(value);
+    return ["localhost", "127.0.0.1", "::1"].includes(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
+const API_BASE_URL = (
+  isLoopbackApiUrl(configuredApiUrl) ? fallbackApiUrl : configuredApiUrl || fallbackApiUrl
+).replace(/\/$/, "");
 
 type ApiOptions = RequestInit & { skipJson?: boolean };
 

@@ -22,8 +22,14 @@ export const app = express();
 function parseOrigins(value) {
   return String(value || "")
     .split(",")
-    .map((origin) => origin.trim())
+    .map(normalizeOrigin)
     .filter(Boolean);
+}
+
+function normalizeOrigin(origin) {
+  return String(origin || "")
+    .trim()
+    .replace(/\/$/, "");
 }
 
 const allowedOrigins = [
@@ -43,8 +49,9 @@ const allowedOriginPatterns = [/^https:\/\/[a-z0-9-]+\.vercel\.app$/i];
 const corsOptions = {
   origin(origin, callback) {
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    if (allowedOriginPatterns.some((pattern) => pattern.test(origin))) {
+    const normalizedOrigin = normalizeOrigin(origin);
+    if (allowedOrigins.includes(normalizedOrigin)) return callback(null, true);
+    if (allowedOriginPatterns.some((pattern) => pattern.test(normalizedOrigin))) {
       return callback(null, true);
     }
     return callback(null, false);
