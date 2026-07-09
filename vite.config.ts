@@ -6,10 +6,16 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
+const apiHandler = "./api/[...path].js";
+
 export default defineConfig({
   nitro: {
     preset: "vercel",
-    handlers: [{ route: "/api/**", handler: "./api/[...path].js", format: "node" }],
+    handlers: [
+      { route: "/api/admin/**", handler: apiHandler, format: "node" },
+      { route: "/api/orders/**", handler: apiHandler, format: "node" },
+      { route: "/api/**", handler: apiHandler, format: "node" },
+    ],
     vercel: {
       entryFormat: "node",
     },

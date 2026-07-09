@@ -61,6 +61,14 @@ function AdminDashboard() {
 }
 
 function AdminDashboardIndex() {
+  return (
+    <AdminLayout title="Dashboard">
+      <AdminDashboardContent />
+    </AdminLayout>
+  );
+}
+
+function AdminDashboardContent() {
   const summary = useQuery({
     queryKey: ["admin-summary"],
     queryFn: () => adminApi.dashboard<DashboardSummary>("summary"),
@@ -96,7 +104,7 @@ function AdminDashboardIndex() {
   ];
 
   return (
-    <AdminLayout title="Dashboard">
+    <>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {cards.map((card) => {
           const Icon = card.icon;
@@ -227,6 +235,6 @@ function AdminDashboardIndex() {
           </div>
         </AdminCard>
       </div>
-    </AdminLayout>
+    </>
   );
 }
