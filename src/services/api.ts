@@ -58,6 +58,12 @@ export class ApiClientError extends Error {
 }
 
 export async function apiRequest<T>(path: string, options: ApiOptions = {}): Promise<T> {
+  // During SSR, skip all API calls. Data will be fetched client-side after hydration.
+  // Making HTTP requests from the SSR server to itself causes cold-start failures on Vercel.
+  if (import.meta.env.SSR) {
+    throw new ApiClientError("SSR: skipping API call", 0);
+  }
+
   const headers = new Headers(options.headers);
   if (!options.skipJson && options.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
