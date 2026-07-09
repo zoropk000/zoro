@@ -10,8 +10,7 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
       throw error;
     }
     console.error(error);
-    const errString = error instanceof Error ? error.stack : String(error);
-    return new Response(`<!doctype html><html><body><h1>SSR Middleware Error</h1><pre>${errString}</pre></body></html>`, {
+    return new Response(renderErrorPage(), {
       status: 500,
       headers: { "content-type": "text/html; charset=utf-8" },
     });

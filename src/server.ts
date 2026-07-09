@@ -49,27 +49,10 @@ export default {
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      
-      if (response.status >= 500) {
-        const contentType = response.headers.get("content-type") ?? "";
-        if (contentType.includes("application/json")) {
-          const body = await response.clone().text();
-          if (isH3SwallowedErrorBody(body)) {
-            const captured = consumeLastCapturedError();
-            const errString = captured instanceof Error ? captured.stack : String(captured ?? body);
-            console.error("Catastrophic SSR Error:", errString);
-            return new Response(`<!doctype html><html><body><h1>SSR Error</h1><pre>${errString}</pre></body></html>`, {
-              status: 500,
-              headers: { "content-type": "text/html; charset=utf-8" },
-            });
-          }
-        }
-      }
-      return response;
+      return await normalizeCatastrophicSsrResponse(response);
     } catch (error) {
       console.error(error);
-      const errString = error instanceof Error ? error.stack : String(error);
-      return new Response(`<!doctype html><html><body><h1>SSR Error</h1><pre>${errString}</pre></body></html>`, {
+      return new Response(renderErrorPage(), {
         status: 500,
         headers: { "content-type": "text/html; charset=utf-8" },
       });
