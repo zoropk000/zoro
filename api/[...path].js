@@ -1,6 +1,5 @@
 import { app } from "../backend/src/app.js";
 import { connectDB } from "../backend/src/config/db.js";
-import { defineNodeHandler } from "h3";
 
 let connectionPromise;
 
@@ -14,7 +13,7 @@ function getConnection() {
   return connectionPromise;
 }
 
-async function backendHandler(req, res) {
+export default async function handler(req, res) {
   try {
     if (req.method === "OPTIONS" || req.url?.startsWith("/api/health")) {
       return app(req, res);
@@ -30,5 +29,3 @@ async function backendHandler(req, res) {
     });
   }
 }
-
-export default defineNodeHandler(backendHandler);

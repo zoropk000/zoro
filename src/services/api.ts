@@ -1,5 +1,12 @@
 const configuredApiUrl = import.meta.env.VITE_API_URL;
 
+function splitEnvList(value: string | undefined) {
+  return String(value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 function trimTrailingSlash(value: string) {
   return value.replace(/\/$/, "");
 }
@@ -9,11 +16,30 @@ function withApiPath(value: string) {
   return normalized.endsWith("/api") ? normalized : `${normalized}/api`;
 }
 
-function getServerApiUrl() {
-  const explicit = process.env.VITE_API_URL;
-  if (explicit?.startsWith("http")) return trimTrailingSlash(explicit);
+function firstHttpUrl(value: string | undefined) {
+  return splitEnvList(value).find((item) => /^https?:\/\//i.test(item));
+}
 
-  const frontendUrl = process.env.FRONTEND_URL;
+function isLoopbackUrl(value: string | undefined) {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    return ["localhost", "127.0.0.1", "::1"].includes(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
+function firstDeployableHttpUrl(value: string | undefined) {
+  const urls = splitEnvList(value).filter((item) => /^https?:\/\//i.test(item));
+  return urls.find((item) => !isLoopbackUrl(item)) ?? (import.meta.env.PROD ? undefined : urls[0]);
+}
+
+function getServerApiUrl() {
+  const explicit = firstDeployableHttpUrl(process.env.VITE_API_URL);
+  if (explicit) return trimTrailingSlash(explicit);
+
+  const frontendUrl = firstDeployableHttpUrl(process.env.FRONTEND_URL);
   if (frontendUrl) return withApiPath(frontendUrl);
 
   const vercelUrl = process.env.VERCEL_URL;
@@ -23,13 +49,7 @@ function getServerApiUrl() {
 }
 
 function isLoopbackApiUrl(value: string | undefined) {
-  if (!value || !import.meta.env.PROD) return false;
-  try {
-    const url = new URL(value);
-    return ["localhost", "127.0.0.1", "::1"].includes(url.hostname);
-  } catch {
-    return false;
-  }
+  return import.meta.env.PROD && isLoopbackUrl(firstHttpUrl(value));
 }
 
 const fallbackApiUrl = import.meta.env.DEV
