@@ -1,11 +1,21 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
 import { ProductCard } from "@/components/ProductCard";
-import { products } from "@/data/products";
+import { getProducts } from "@/services/productService";
 import { reviews } from "@/data/reviews";
 import { siteConfig } from "@/config/siteConfig";
 import { useLanguage } from "@/lib/language-context";
-import { MessageCircle, ShieldCheck, Truck, Wallet, RefreshCw, Headphones, Star } from "lucide-react";
+import {
+  MessageCircle,
+  ShieldCheck,
+  Truck,
+  Wallet,
+  RefreshCw,
+  Headphones,
+  Star,
+} from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -13,7 +23,15 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   const { t } = useLanguage();
-  const bestSellers = products.filter((p) => p.bestSeller).slice(0, 8);
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ["home-best-sellers"],
+    queryFn: async () => {
+      const featured = await getProducts({ featured: true, limit: 8 });
+      if (featured.products.length > 0) return featured;
+      return getProducts({ limit: 8, sort: "newest" });
+    },
+  });
+  const bestSellers = data?.products || [];
 
   const categories = [
     {
@@ -43,10 +61,16 @@ function HomePage() {
               <span className="font-semibold text-foreground">{t("heroPay")}</span>
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link to="/shop" className="rounded-xl bg-primary px-6 py-4 text-base font-bold text-primary-foreground hover:bg-primary/90">
+              <Link
+                to="/shop"
+                className="rounded-xl bg-primary px-6 py-4 text-base font-bold text-primary-foreground hover:bg-primary/90"
+              >
                 {t("shopShoes")}
               </Link>
-              <Link to="/sale" className="rounded-xl border border-primary bg-background px-6 py-4 text-base font-bold text-primary hover:bg-secondary">
+              <Link
+                to="/sale"
+                className="rounded-xl border border-primary bg-background px-6 py-4 text-base font-bold text-primary hover:bg-secondary"
+              >
                 {t("viewSale")}
               </Link>
             </div>
@@ -71,7 +95,11 @@ function HomePage() {
         <SectionTitle title={t("shopByCategory")} subtitle={t("shopByCategorySub")} />
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           {categories.map((c) => (
-            <Link key={c.to} to={c.to} className="group relative overflow-hidden rounded-3xl bg-secondary">
+            <Link
+              key={c.to}
+              to={c.to}
+              className="group relative overflow-hidden rounded-3xl bg-secondary"
+            >
               <div className="aspect-[4/3]">
                 <img
                   src={c.img}
@@ -80,7 +108,9 @@ function HomePage() {
                 />
               </div>
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-6">
-                <div className="text-2xl font-extrabold text-white sm:text-3xl">{t(c.titleKey)}</div>
+                <div className="text-2xl font-extrabold text-white sm:text-3xl">
+                  {t(c.titleKey)}
+                </div>
                 <div className="mt-2 inline-block rounded-full bg-white/20 px-4 py-1.5 text-sm font-bold text-white backdrop-blur-sm">
                   {t("shopNowArrow")}
                 </div>
@@ -94,11 +124,38 @@ function HomePage() {
       <section className="bg-secondary/40 py-12">
         <div className="mx-auto max-w-7xl px-4">
           <SectionTitle title={t("bestSellers")} subtitle={t("bestSellersSub")} />
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {bestSellers.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="rounded-2xl border border-border bg-card p-3">
+                  <Skeleton className="aspect-square rounded-xl" />
+                  <Skeleton className="mt-4 h-5 w-4/5" />
+                  <Skeleton className="mt-2 h-4 w-full" />
+                  <Skeleton className="mt-4 h-10 w-full rounded-lg" />
+                </div>
+              ))}
+            </div>
+          ) : isError ? (
+            <div className="rounded-2xl border border-border bg-card p-8 text-center">
+              <p className="font-semibold">{t("couldNotLoadShoes")}</p>
+              <button
+                onClick={() => refetch()}
+                className="mt-4 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground"
+              >
+                {t("tryAgain")}
+              </button>
+            </div>
+          ) : bestSellers.length > 0 ? (
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+              {bestSellers.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">
+              {t("noShoesFound")}
+            </div>
+          )}
         </div>
       </section>
 
@@ -117,10 +174,26 @@ function HomePage() {
         <div className="mx-auto max-w-7xl px-4">
           <SectionTitle title={t("whyTrustUs")} />
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <TrustCard icon={<ShieldCheck className="h-6 w-6" />} title={t("trustOriginalQuality")} text={t("trustOriginalQualityText")} />
-            <TrustCard icon={<Wallet className="h-6 w-6" />} title={t("trustCOD")} text={t("trustCODText")} />
-            <TrustCard icon={<RefreshCw className="h-6 w-6" />} title={t("trustExchange")} text={t("trustExchangeText")} />
-            <TrustCard icon={<Headphones className="h-6 w-6" />} title={t("trustSupport")} text={t("trustSupportText")} />
+            <TrustCard
+              icon={<ShieldCheck className="h-6 w-6" />}
+              title={t("trustOriginalQuality")}
+              text={t("trustOriginalQualityText")}
+            />
+            <TrustCard
+              icon={<Wallet className="h-6 w-6" />}
+              title={t("trustCOD")}
+              text={t("trustCODText")}
+            />
+            <TrustCard
+              icon={<RefreshCw className="h-6 w-6" />}
+              title={t("trustExchange")}
+              text={t("trustExchangeText")}
+            />
+            <TrustCard
+              icon={<Headphones className="h-6 w-6" />}
+              title={t("trustSupport")}
+              text={t("trustSupportText")}
+            />
           </div>
         </div>
       </section>
@@ -137,7 +210,9 @@ function HomePage() {
                 ))}
               </div>
               <p className="text-sm text-foreground">{r.text}</p>
-              <div className="mt-3 text-xs font-semibold text-muted-foreground">— {r.name}, {r.city}</div>
+              <div className="mt-3 text-xs font-semibold text-muted-foreground">
+                — {r.name}, {r.city}
+              </div>
             </div>
           ))}
         </div>

@@ -117,9 +117,11 @@ export const translations = {
     sizeInformation: "Size Information",
     sizeInfoText: "Available sizes: %s. Use the size guide to find your fit.",
     deliveryInformation: "Delivery Information",
-    deliveryInfoText: "Major cities: 2-4 working days. Other cities: 3-7 working days. Delivery fee Rs. %fee. Free delivery over Rs. %threshold.",
+    deliveryInfoText:
+      "Major cities: 2-4 working days. Other cities: 3-7 working days. Delivery fee Rs. %fee. Free delivery over Rs. %threshold.",
     exchangePolicy: "Exchange Policy",
-    exchangePolicyText: "Wrong size? Contact us on WhatsApp with your order number. We will guide you through the exchange process.",
+    exchangePolicyText:
+      "Wrong size? Contact us on WhatsApp with your order number. We will guide you through the exchange process.",
     youMayAlsoLike: "You may also like",
     selectSizeFirst: "Please select your shoe size first.",
     breadcrumbHome: "Home",
@@ -214,7 +216,8 @@ export const translations = {
     mobileNumberLabel: "Mobile Number",
     mobileLabelPlaceholder: "03XX XXXXXXX",
     trackOrderBtn: "Track Order",
-    orderNotFound: "We could not find this order. Please check your order number and mobile number, or contact us on WhatsApp.",
+    orderNotFound:
+      "We could not find this order. Please check your order number and mobile number, or contact us on WhatsApp.",
     statusReceived: "Order Received",
     statusConfirmed: "Order Confirmed",
     statusPacked: "Packed",
@@ -235,8 +238,10 @@ export const translations = {
     messageUsWhatsApp: "Message us on WhatsApp",
     // === ABOUT ===
     aboutTitle: "About",
-    aboutP1: "is a Pakistani shoe brand focused on comfortable, affordable shoes for the whole family. We deliver across Pakistan with Cash on Delivery so you can shop with confidence.",
-    aboutP2: "Our mission is to make online shoe shopping simple and trustworthy - even for first-time online shoppers. No account is needed. Just choose your shoes, enter your details, and pay cash when your order arrives.",
+    aboutP1:
+      "is a Pakistani shoe brand focused on comfortable, affordable shoes for the whole family. We deliver across Pakistan with Cash on Delivery so you can shop with confidence.",
+    aboutP2:
+      "Our mission is to make online shoe shopping simple and trustworthy - even for first-time online shoppers. No account is needed. Just choose your shoes, enter your details, and pay cash when your order arrives.",
     aboutWhatWeOffer: "What we offer",
     aboutOffer1: "Quality checked shoes for men, women, and everyday wear",
     aboutOffer2: "Cash on Delivery all over Pakistan",
@@ -251,7 +256,8 @@ export const translations = {
     // === FAQ ===
     faqTitle: "Frequently Asked Questions",
     faqQ1: "How can I place an order?",
-    faqA1: "Choose a shoe, select your size, enter your name, phone number, and address, then click Place Order. No account is needed.",
+    faqA1:
+      "Choose a shoe, select your size, enter your name, phone number, and address, then click Place Order. No account is needed.",
     faqQ2: "Is Cash on Delivery available?",
     faqA2: "Yes. You pay cash when your order arrives. No online payment is required.",
     faqQ3: "Do I need an account?",
@@ -259,9 +265,11 @@ export const translations = {
     faqQ4: "How long does delivery take?",
     faqA4: "Major cities: 2-4 working days. Other cities: 3-7 working days.",
     faqQ5: "How do I choose my shoe size?",
-    faqA5: "Use our Simple Size Guide. Measure your foot in cm and match it to the size chart. You can also message us on WhatsApp for help.",
+    faqA5:
+      "Use our Simple Size Guide. Measure your foot in cm and match it to the size chart. You can also message us on WhatsApp for help.",
     faqQ6: "What happens if the size does not fit?",
-    faqA6: "Contact us with your order number. We will guide you through the size exchange process.",
+    faqA6:
+      "Contact us with your order number. We will guide you through the size exchange process.",
     faqQ7: "Can I exchange my shoes?",
     faqA7: "Yes, for size issues. The shoes must be unused and in original condition.",
     faqQ8: "Do you deliver all over Pakistan?",
@@ -293,13 +301,16 @@ export const translations = {
     waExchangeMsg: "Assalamualaikum, I want to request a size exchange.",
     // === PRIVACY ===
     privacyTitle: "Privacy Policy",
-    privacyP1: "We collect only the information needed to deliver your order: name, mobile number, city, and delivery address. This information is used to process and deliver your order.",
+    privacyP1:
+      "We collect only the information needed to deliver your order: name, mobile number, city, and delivery address. This information is used to process and deliver your order.",
     privacyP2: "We do not share your details with third parties except our delivery partners.",
     privacyP3: "For any privacy questions, please contact us.",
     // === TERMS ===
     termsTitle: "Terms & Conditions",
-    termsP1: "By placing an order on our website, you agree that the information you provide is correct. Cash on Delivery orders are subject to confirmation by phone or WhatsApp.",
-    termsP2: "Prices and availability may change without notice. Size exchange is available only for unused shoes in original condition.",
+    termsP1:
+      "By placing an order on our website, you agree that the information you provide is correct. Cash on Delivery orders are subject to confirmation by phone or WhatsApp.",
+    termsP2:
+      "Prices and availability may change without notice. Size exchange is available only for unused shoes in original condition.",
     // === FOOTER ===
     footerShop: "Shop",
     footerMen: "Men",
@@ -334,6 +345,13 @@ export const translations = {
     somethingWentWrong: "Something went wrong",
     tryAgainText: "Please try again, or head back home.",
     tryAgain: "Try again",
+    loadingShoes: "Loading shoes...",
+    couldNotLoadShoes: "We could not load the shoes.",
+    productUnavailable: "Product unavailable",
+    orderFailed: "Order failed. Please try again.",
+    creatingOrder: "Creating order...",
+    loadingOrder: "Loading order...",
+    orderCancelled: "This order has been cancelled.",
     goHome: "Go home",
     // === STOCK STATUS ===
     inStock: "In Stock",
@@ -455,9 +473,11 @@ export const translations = {
     sizeInformation: "سائز کی معلومات",
     sizeInfoText: "دستیاب سائز: %s۔ سائز گائیڈ سے اپنا سائز معلوم کریں۔",
     deliveryInformation: "ڈیلیوری کی معلومات",
-    deliveryInfoText: "بڑے شہر: ۲ تا ۴ دن۔ دیگر شہر: ۳ تا ۷ دن۔ ڈیلیوری فیس روپے %fee۔ روپے %threshold سے زیادہ پر مفت ڈیلیوری۔",
+    deliveryInfoText:
+      "بڑے شہر: ۲ تا ۴ دن۔ دیگر شہر: ۳ تا ۷ دن۔ ڈیلیوری فیس روپے %fee۔ روپے %threshold سے زیادہ پر مفت ڈیلیوری۔",
     exchangePolicy: "تبادلے کی پالیسی",
-    exchangePolicyText: "سائز غلط ہو؟ واٹس ایپ پر آرڈر نمبر کے ساتھ رابطہ کریں۔ ہم سائز تبدیلی میں مدد کریں گے۔",
+    exchangePolicyText:
+      "سائز غلط ہو؟ واٹس ایپ پر آرڈر نمبر کے ساتھ رابطہ کریں۔ ہم سائز تبدیلی میں مدد کریں گے۔",
     youMayAlsoLike: "آپ کو یہ بھی پسند آ سکتے ہیں",
     selectSizeFirst: "براہ کرم پہلے اپنا سائز منتخب کریں۔",
     breadcrumbHome: "ہوم",
@@ -552,7 +572,8 @@ export const translations = {
     mobileNumberLabel: "موبائل نمبر",
     mobileLabelPlaceholder: "03XX XXXXXXX",
     trackOrderBtn: "آرڈر ٹریک کریں",
-    orderNotFound: "یہ آرڈر نہیں ملا۔ آرڈر نمبر اور موبائل نمبر دوبارہ چیک کریں، یا واٹس ایپ پر رابطہ کریں۔",
+    orderNotFound:
+      "یہ آرڈر نہیں ملا۔ آرڈر نمبر اور موبائل نمبر دوبارہ چیک کریں، یا واٹس ایپ پر رابطہ کریں۔",
     statusReceived: "آرڈر موصول ہوا",
     statusConfirmed: "آرڈر کی تصدیق",
     statusPacked: "پیک ہو گیا",
@@ -573,8 +594,10 @@ export const translations = {
     messageUsWhatsApp: "واٹس ایپ پر میسج کریں",
     // === ABOUT ===
     aboutTitle: "ہمارے بارے میں",
-    aboutP1: "پاکستان کا ایک جوتوں کا برانڈ ہے جو پورے خاندان کے لیے آرام دہ اور سستے جوتے فراہم کرتا ہے۔ ہم کیش آن ڈیلیوری کے ساتھ پورے پاکستان میں ڈیلیور کرتے ہیں۔",
-    aboutP2: "ہمارا مقصد آن لائن جوتوں کی خریداری کو آسان اور قابل اعتماد بنانا ہے۔ اکاؤنٹ بنانے کی ضرورت نہیں۔ بس جوتے چنیں، تفصیل درج کریں، اور آرڈر ملنے پر ادائیگی کریں۔",
+    aboutP1:
+      "پاکستان کا ایک جوتوں کا برانڈ ہے جو پورے خاندان کے لیے آرام دہ اور سستے جوتے فراہم کرتا ہے۔ ہم کیش آن ڈیلیوری کے ساتھ پورے پاکستان میں ڈیلیور کرتے ہیں۔",
+    aboutP2:
+      "ہمارا مقصد آن لائن جوتوں کی خریداری کو آسان اور قابل اعتماد بنانا ہے۔ اکاؤنٹ بنانے کی ضرورت نہیں۔ بس جوتے چنیں، تفصیل درج کریں، اور آرڈر ملنے پر ادائیگی کریں۔",
     aboutWhatWeOffer: "ہم کیا پیش کرتے ہیں",
     aboutOffer1: "مردوں، خواتین اور روزانہ استعمال کے لیے معیاری جوتے",
     aboutOffer2: "پورے پاکستان میں کیش آن ڈیلیوری",
@@ -597,7 +620,8 @@ export const translations = {
     faqQ4: "ڈیلیوری میں کتنا وقت لگتا ہے؟",
     faqA4: "بڑے شہر: ۲ تا ۴ دن۔ دیگر شہر: ۳ تا ۷ دن۔",
     faqQ5: "اپنا سائز کیسے معلوم کریں؟",
-    faqA5: "ہماری آسان سائز گائیڈ استعمال کریں۔ پاؤں کی لمبائی سینٹی میٹر میں ناپیں اور جدول سے ملائیں۔",
+    faqA5:
+      "ہماری آسان سائز گائیڈ استعمال کریں۔ پاؤں کی لمبائی سینٹی میٹر میں ناپیں اور جدول سے ملائیں۔",
     faqQ6: "سائز فٹ نہ ہو تو کیا کریں؟",
     faqA6: "آرڈر نمبر کے ساتھ رابطہ کریں۔ ہم سائز تبدیلی میں مدد کریں گے۔",
     faqQ7: "کیا جوتے تبدیل ہو سکتے ہیں؟",
@@ -631,13 +655,15 @@ export const translations = {
     waExchangeMsg: "السلام علیکم، میں سائز تبدیل کروانا چاہتا/چاہتی ہوں۔",
     // === PRIVACY ===
     privacyTitle: "پرائیویسی پالیسی",
-    privacyP1: "ہم صرف وہ معلومات جمع کرتے ہیں جو آرڈر ڈیلیور کرنے کے لیے ضروری ہیں: نام، موبائل نمبر، شہر اور ڈیلیوری پتہ۔",
+    privacyP1:
+      "ہم صرف وہ معلومات جمع کرتے ہیں جو آرڈر ڈیلیور کرنے کے لیے ضروری ہیں: نام، موبائل نمبر، شہر اور ڈیلیوری پتہ۔",
     privacyP2: "ہم آپ کی تفصیل ڈیلیوری پارٹنرز کے علاوہ کسی کو نہیں دیتے۔",
     privacyP3: "پرائیویسی سے متعلق کوئی سوال ہو تو ہم سے رابطہ کریں۔",
     // === TERMS ===
     termsTitle: "شرائط و ضوابط",
     termsP1: "ویب سائٹ پر آرڈر کر کے آپ تصدیق کرتے ہیں کہ آپ کی فراہم کردہ معلومات درست ہیں۔",
-    termsP2: "قیمتیں اور دستیابی بغیر اطلاع کے تبدیل ہو سکتی ہیں۔ سائز تبدیلی صرف بغیر استعمال جوتوں کے لیے ہے۔",
+    termsP2:
+      "قیمتیں اور دستیابی بغیر اطلاع کے تبدیل ہو سکتی ہیں۔ سائز تبدیلی صرف بغیر استعمال جوتوں کے لیے ہے۔",
     // === FOOTER ===
     footerShop: "خریداری",
     footerMen: "مردوں کے جوتے",
@@ -672,6 +698,13 @@ export const translations = {
     somethingWentWrong: "کچھ غلط ہو گیا",
     tryAgainText: "براہ کرم دوبارہ کوشش کریں یا ہوم پر جائیں۔",
     tryAgain: "دوبارہ کوشش کریں",
+    loadingShoes: "جوتے لوڈ ہو رہے ہیں...",
+    couldNotLoadShoes: "ہم جوتے لوڈ نہیں کر سکے۔",
+    productUnavailable: "یہ پراڈکٹ دستیاب نہیں ہے",
+    orderFailed: "آرڈر مکمل نہیں ہو سکا۔ دوبارہ کوشش کریں۔",
+    creatingOrder: "آرڈر بنایا جا رہا ہے...",
+    loadingOrder: "آرڈر لوڈ ہو رہا ہے...",
+    orderCancelled: "یہ آرڈر منسوخ ہو چکا ہے۔",
     goHome: "ہوم پر جائیں",
     // === STOCK STATUS ===
     inStock: "دستیاب ہے",

@@ -12,10 +12,23 @@ export const Route = createFileRoute("/cart")({
 });
 
 function CartPage() {
-  const { lines, subtotal, updateQuantity, removeItem } = useCart();
+  const { lines, subtotal, updateQuantity, removeItem, isLoading } = useCart();
   const { t } = useLanguage();
   const delivery = calcDeliveryFee(subtotal);
   const total = subtotal + delivery;
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="mx-auto max-w-4xl px-4 py-10">
+          <h1 className="mb-6 text-3xl font-extrabold">{t("yourCart")}</h1>
+          <div className="rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">
+            {t("loadingShoes")}
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   if (lines.length === 0) {
     return (
@@ -50,7 +63,7 @@ function CartPage() {
               >
                 <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-secondary sm:h-28 sm:w-28">
                   <img
-                    src={line.product.images[0]}
+                    src={line.product.images[0] || "/logo.png"}
                     alt={line.product.name}
                     className="h-full w-full object-cover"
                   />
@@ -63,7 +76,9 @@ function CartPage() {
                   >
                     {line.product.name}
                   </Link>
-                  <div className="mt-1 text-sm text-muted-foreground">{t("size")}: {line.size}</div>
+                  <div className="mt-1 text-sm text-muted-foreground">
+                    {t("size")}: {line.size}
+                  </div>
                   <div className="mt-1 text-base font-bold">{formatPKR(line.product.price)}</div>
                   <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-2">
                     <div className="inline-flex items-center rounded-lg border border-border">
@@ -74,7 +89,9 @@ function CartPage() {
                       >
                         <Minus className="h-4 w-4" />
                       </button>
-                      <span className="w-10 text-center text-base font-semibold">{line.quantity}</span>
+                      <span className="w-10 text-center text-base font-semibold">
+                        {line.quantity}
+                      </span>
                       <button
                         onClick={() => updateQuantity(line.productId, line.size, line.quantity + 1)}
                         className="p-2 hover:bg-secondary"
@@ -99,7 +116,10 @@ function CartPage() {
             <h2 className="mb-4 text-lg font-bold">{t("orderSummary")}</h2>
             <div className="space-y-2 text-sm">
               <Row label={t("products")} value={formatPKR(subtotal)} />
-              <Row label={t("delivery")} value={delivery === 0 ? t("freeDelivery") : formatPKR(delivery)} />
+              <Row
+                label={t("delivery")}
+                value={delivery === 0 ? t("freeDelivery") : formatPKR(delivery)}
+              />
               <div className="my-2 border-t border-border" />
               <Row label={t("total")} value={formatPKR(total)} bold />
             </div>

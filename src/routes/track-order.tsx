@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Layout } from "@/components/Layout";
-import { findOrder, type SavedOrder } from "@/lib/orders";
+import { trackOrder, type TrackedOrder } from "@/services/orderService";
 import { formatPKR } from "@/lib/currency";
 import { Check, Circle, Package } from "lucide-react";
 import { useLanguage } from "@/lib/language-context";
@@ -11,45 +11,55 @@ export const Route = createFileRoute("/track-order")({
   component: TrackPage,
 });
 
-const STEPS: SavedOrder["status"][] = ["Received", "Confirmed", "Packed", "Shipped", "Delivered"];
+const STEPS: TrackedOrder["orderStatus"][] = [
+  "pending",
+  "confirmed",
+  "processing",
+  "shipped",
+  "delivered",
+];
 
 function TrackPage() {
   const [orderNum, setOrderNum] = useState("");
   const [phone, setPhone] = useState("");
-  const [order, setOrder] = useState<SavedOrder | null>(null);
+  const [order, setOrder] = useState<TrackedOrder | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { t } = useLanguage();
 
   const stepLabels: Record<string, string> = {
-    Received: t("statusReceived"),
-    Confirmed: t("statusConfirmed"),
-    Packed: t("statusPacked"),
-    Shipped: t("statusShipped"),
-    Delivered: t("statusDelivered"),
+    pending: t("statusReceived"),
+    confirmed: t("statusConfirmed"),
+    processing: t("statusPacked"),
+    shipped: t("statusShipped"),
+    delivered: t("statusDelivered"),
   };
 
   const paymentDisplay =
     order?.paymentMethod === "cod"
       ? t("paymentCodDisplay")
-      : order?.paymentMethod === "easypaisa"
+      : order?.paymentMethod === "easypaisa_jazzcash"
         ? t("paymentEasypaisaDisplay")
-        : order?.paymentMethod === "meezan"
+        : order?.paymentMethod === "meezan_bank"
           ? t("paymentMeezanDisplay")
           : t("paymentCodDisplay");
 
-  const handleTrack = (e: React.FormEvent) => {
+  const handleTrack = async (e: React.FormEvent) => {
     e.preventDefault();
-    const found = findOrder(orderNum, phone);
-    if (found) {
-      setOrder(found);
+    try {
+      setLoading(true);
+      const response = await trackOrder(orderNum, phone);
+      setOrder(response.order);
       setNotFound(false);
-    } else {
+    } catch {
       setOrder(null);
       setNotFound(true);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const currentIdx = order ? STEPS.indexOf(order.status) : -1;
+  const currentIdx = order ? STEPS.indexOf(order.orderStatus) : -1;
 
   return (
     <Layout>
@@ -57,7 +67,10 @@ function TrackPage() {
         <h1 className="mb-2 text-3xl font-extrabold">{t("trackYourOrder")}</h1>
         <p className="mb-6 text-muted-foreground">{t("trackSubtitle")}</p>
 
-        <form onSubmit={handleTrack} className="space-y-4 rounded-2xl border border-border bg-card p-5">
+        <form
+          onSubmit={handleTrack}
+          className="space-y-4 rounded-2xl border border-border bg-card p-5"
+        >
           <div>
             <label className="mb-1 block text-sm font-semibold">{t("orderNumberLabel")}</label>
             <input
@@ -77,8 +90,12 @@ function TrackPage() {
               className="w-full rounded-xl border border-border bg-background px-4 py-4 text-base"
             />
           </div>
-          <button type="submit" className="w-full rounded-xl bg-primary py-4 text-base font-bold text-primary-foreground">
-            {t("trackOrderBtn")}
+          <button
+            disabled={loading}
+            type="submit"
+            className="w-full rounded-xl bg-primary py-4 text-base font-bold text-primary-foreground disabled:opacity-60"
+          >
+            {loading ? t("loadingOrder") : t("trackOrderBtn")}
           </button>
         </form>
 
@@ -91,14 +108,20 @@ function TrackPage() {
         {order && (
           <div className="mt-6 space-y-4 rounded-2xl border border-border bg-card p-5">
             <div className="flex items-center gap-2 text-lg font-bold">
-              <Package className="h-5 w-5 text-primary" />
-              #{order.orderNumber}
+              <Package className="h-5 w-5 text-primary" />#{order.orderNumber}
             </div>
             <div className="text-sm text-muted-foreground">
-              {t("total")}: <span className="font-semibold text-foreground">{formatPKR(order.total)}</span>
+              {t("total")}:{" "}
+              <span className="font-semibold text-foreground">{formatPKR(order.total)}</span>
               <br />
-              {t("paymentLabel")} <span className="font-semibold text-foreground">{paymentDisplay}</span>
+              {t("paymentLabel")}{" "}
+              <span className="font-semibold text-foreground">{paymentDisplay}</span>
             </div>
+            {order.orderStatus === "cancelled" && (
+              <div className="rounded-xl bg-destructive/10 p-3 text-sm font-semibold text-destructive">
+                {t("orderCancelled")}
+              </div>
+            )}
             <ol className="space-y-3">
               {STEPS.map((step, i) => {
                 const done = i <= currentIdx;

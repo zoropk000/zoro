@@ -1,10 +1,10 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
-import { products, type Product } from "@/data/products";
+import { getProducts, type Product } from "@/services/productService";
 
 export type CartItem = {
-  productId: number;
-  size: number;
+  productId: string;
+  size: string;
   quantity: number;
 };
 
@@ -15,9 +15,10 @@ type CartContextValue = {
   lines: CartLine[];
   count: number;
   subtotal: number;
-  addItem: (productId: number, size: number, quantity?: number) => void;
-  removeItem: (productId: number, size: number) => void;
-  updateQuantity: (productId: number, size: number, quantity: number) => void;
+  isLoading: boolean;
+  addItem: (productId: string, size: string | number, quantity?: number) => void;
+  removeItem: (productId: string, size: string | number) => void;
+  updateQuantity: (productId: string, size: string | number, quantity: number) => void;
   clearCart: () => void;
 };
 
@@ -32,7 +33,13 @@ function readStorage(): CartItem[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed;
+    return parsed
+      .filter((item) => item?.productId && item?.size && Number(item.quantity) > 0)
+      .map((item) => ({
+        productId: String(item.productId),
+        size: String(item.size),
+        quantity: Number(item.quantity),
+      }));
   } catch {
     return [];
   }
@@ -40,6 +47,8 @@ function readStorage(): CartItem[] {
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [productsById, setProductsById] = useState<Record<string, Product>>({});
+  const [isLoading, setIsLoading] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -56,53 +65,102 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [items, hydrated]);
 
-  const addItem = (productId: number, size: number, quantity = 1) => {
+  useEffect(() => {
+    const ids = [...new Set(items.map((item) => item.productId))];
+    if (!ids.length) {
+      setProductsById({});
+      setIsLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIsLoading(true);
+    getProducts({ ids, limit: ids.length })
+      .then((data) => {
+        if (cancelled) return;
+        setProductsById(Object.fromEntries(data.products.map((product) => [product.id, product])));
+      })
+      .catch(() => {
+        if (!cancelled) setProductsById({});
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [items]);
+
+  const addItem = (productId: string, size: string | number, quantity = 1) => {
+    const normalizedId = String(productId);
+    const normalizedSize = String(size);
     setItems((prev) => {
-      const existing = prev.find((i) => i.productId === productId && i.size === size);
+      const existing = prev.find((i) => i.productId === normalizedId && i.size === normalizedSize);
       if (existing) {
         return prev.map((i) =>
-          i.productId === productId && i.size === size
+          i.productId === normalizedId && i.size === normalizedSize
             ? { ...i, quantity: i.quantity + quantity }
             : i,
         );
       }
-      return [...prev, { productId, size, quantity }];
+      return [...prev, { productId: normalizedId, size: normalizedSize, quantity }];
     });
     toast.success("Added to Cart");
   };
 
-  const removeItem = (productId: number, size: number) => {
-    setItems((prev) => prev.filter((i) => !(i.productId === productId && i.size === size)));
+  const removeItem = (productId: string, size: string | number) => {
+    const normalizedId = String(productId);
+    const normalizedSize = String(size);
+    setItems((prev) =>
+      prev.filter((i) => !(i.productId === normalizedId && i.size === normalizedSize)),
+    );
     toast("Removed from Cart");
   };
 
-  const updateQuantity = (productId: number, size: number, quantity: number) => {
+  const updateQuantity = (productId: string, size: string | number, quantity: number) => {
     if (quantity <= 0) {
       removeItem(productId, size);
       return;
     }
+    const normalizedId = String(productId);
+    const normalizedSize = String(size);
     setItems((prev) =>
       prev.map((i) =>
-        i.productId === productId && i.size === size ? { ...i, quantity } : i,
+        i.productId === normalizedId && i.size === normalizedSize ? { ...i, quantity } : i,
       ),
     );
   };
 
   const clearCart = () => setItems([]);
 
-  const lines: CartLine[] = items
-    .map((i) => {
-      const product = products.find((p) => p.id === i.productId);
-      return product ? { ...i, product } : null;
-    })
-    .filter((l): l is CartLine => l !== null);
+  const lines: CartLine[] = useMemo(
+    () =>
+      items
+        .map((i) => {
+          const product = productsById[i.productId];
+          return product ? { ...i, product } : null;
+        })
+        .filter((l): l is CartLine => l !== null),
+    [items, productsById],
+  );
 
   const count = lines.reduce((sum, l) => sum + l.quantity, 0);
   const subtotal = lines.reduce((sum, l) => sum + l.product.price * l.quantity, 0);
 
   return (
     <CartContext.Provider
-      value={{ items, lines, count, subtotal, addItem, removeItem, updateQuantity, clearCart }}
+      value={{
+        items,
+        lines,
+        count,
+        subtotal,
+        isLoading,
+        addItem,
+        removeItem,
+        updateQuantity,
+        clearCart,
+      }}
     >
       {children}
     </CartContext.Provider>

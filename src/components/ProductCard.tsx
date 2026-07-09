@@ -1,17 +1,20 @@
 import { Link } from "@tanstack/react-router";
 import { Star } from "lucide-react";
-import type { Product } from "@/data/products";
+import type { Product } from "@/services/productService";
 import { formatPKR } from "@/lib/currency";
-import { getDiscount } from "@/data/products";
+import { getDiscount } from "@/services/productService";
 import { useLanguage } from "@/lib/language-context";
+
+const FALLBACK_IMAGE = "/logo.png";
 
 export function ProductCard({ product }: { product: Product }) {
   const discount = getDiscount(product);
   const { t, lang } = useLanguage();
 
-  const displayDescription = lang === "ur" && product.shortDescriptionUr
-    ? product.shortDescriptionUr
-    : product.shortDescription;
+  const displayDescription =
+    lang === "ur" && product.shortDescriptionUrdu
+      ? product.shortDescriptionUrdu
+      : product.shortDescription;
 
   return (
     <Link
@@ -21,7 +24,7 @@ export function ProductCard({ product }: { product: Product }) {
     >
       <div className="relative aspect-square overflow-hidden bg-secondary">
         <img
-          src={product.images[0]}
+          src={product.images[0] || FALLBACK_IMAGE}
           alt={product.name}
           loading="lazy"
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"

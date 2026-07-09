@@ -1,14 +1,16 @@
-import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Layout } from "@/components/Layout";
 import { SizeGuideModal } from "@/components/SizeGuideModal";
 import { ProductCard } from "@/components/ProductCard";
-import { getProductBySlug, getDiscount, products } from "@/data/products";
+import { getDiscount, getProduct, getProducts } from "@/services/productService";
 import { formatPKR } from "@/lib/currency";
 import { useCart } from "@/lib/cart-context";
 import { siteConfig } from "@/config/siteConfig";
 import { useLanguage } from "@/lib/language-context";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   ChevronLeft,
   ChevronRight,
@@ -20,39 +22,79 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/product/$slug")({
-  loader: ({ params }) => {
-    const product = getProductBySlug(params.slug);
-    if (!product) throw notFound();
-    return { product };
-  },
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: loaderData ? `${loaderData.product.name} - ZORO` : "Product" },
-      { name: "description", content: loaderData?.product.shortDescription ?? "" },
-      { property: "og:image", content: loaderData?.product.images[0] ?? "" },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Product - ZORO" }] }),
   component: ProductPage,
 });
 
 function ProductPage() {
-  const { product } = Route.useLoaderData();
-  const [size, setSize] = useState<number | null>(null);
+  const { slug } = Route.useParams();
+  const [size, setSize] = useState<string | null>(null);
   const [imgIdx, setImgIdx] = useState(0);
   const [openDetails, setOpenDetails] = useState<string | null>("details");
   const [showSizeGuide, setShowSizeGuide] = useState(false);
   const { addItem } = useCart();
   const navigate = useNavigate();
   const { t, lang } = useLanguage();
+  const {
+    data: product,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ["product", slug],
+    queryFn: () => getProduct(slug),
+  });
+  const { data: relatedData } = useQuery({
+    queryKey: ["related-products", product?.gender, product?.id],
+    queryFn: () => getProducts({ gender: product!.gender, limit: 5 }),
+    enabled: !!product,
+  });
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-6 md:grid-cols-2">
+          <Skeleton className="aspect-square rounded-2xl" />
+          <div>
+            <Skeleton className="h-9 w-4/5" />
+            <Skeleton className="mt-4 h-6 w-32" />
+            <Skeleton className="mt-8 h-12 w-48" />
+            <Skeleton className="mt-6 h-20 w-full" />
+            <Skeleton className="mt-6 h-14 w-full" />
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (isError || !product) {
+    return (
+      <Layout>
+        <div className="mx-auto max-w-xl px-4 py-16 text-center">
+          <h1 className="text-2xl font-extrabold">{t("productUnavailable")}</h1>
+          <p className="mt-2 text-muted-foreground">{t("couldNotLoadShoes")}</p>
+          <button
+            onClick={() => refetch()}
+            className="mt-6 rounded-xl bg-primary px-6 py-3 font-bold text-primary-foreground"
+          >
+            {t("tryAgain")}
+          </button>
+        </div>
+      </Layout>
+    );
+  }
 
   const discount = getDiscount(product);
-  const related = products
-    .filter((p) => p.id !== product.id && p.gender === product.gender)
-    .slice(0, 4);
+  const related = (relatedData?.products || []).filter((p) => p.id !== product.id).slice(0, 4);
 
   const handleAdd = (buyNow = false) => {
     if (!size) {
       toast.error(t("selectSizeFirst"));
+      return;
+    }
+    const selected = product.sizes.find((row) => row.size === size);
+    if (!selected || selected.stock <= 0) {
+      toast.error(t("outOfStock"));
       return;
     }
     addItem(product.id, size, 1);
@@ -60,13 +102,11 @@ function ProductPage() {
   };
 
   const displayDescription =
-    lang === "ur" && product.shortDescriptionUr
-      ? product.shortDescriptionUr
+    lang === "ur" && product.shortDescriptionUrdu
+      ? product.shortDescriptionUrdu
       : product.shortDescription;
 
-  const waMsg = encodeURIComponent(
-    `${t("waProductMsg")} ${product.name}`
-  );
+  const waMsg = encodeURIComponent(`${t("waProductMsg")} ${product.name}`);
 
   const accordions = [
     {
@@ -75,7 +115,7 @@ function ProductPage() {
       body: (
         <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
           {(lang === "ur" && product.descriptionUr
-            ? product.descriptionUr
+            ? product.descriptionUrdu
             : product.description
           ).map((d: string, i: number) => (
             <li key={i}>{d}</li>
@@ -88,7 +128,7 @@ function ProductPage() {
       label: t("sizeInformation"),
       body: (
         <p className="text-sm text-muted-foreground">
-          {t("sizeInfoText").replace("%s", product.sizes.join(", "))}
+          {t("sizeInfoText").replace("%s", product.sizes.map((row) => row.size).join(", "))}
         </p>
       ),
     },
@@ -106,9 +146,7 @@ function ProductPage() {
     {
       key: "exchange",
       label: t("exchangePolicy"),
-      body: (
-        <p className="text-sm text-muted-foreground">{t("exchangePolicyText")}</p>
-      ),
+      body: <p className="text-sm text-muted-foreground">{t("exchangePolicyText")}</p>,
     },
   ];
 
@@ -117,9 +155,13 @@ function ProductPage() {
       <div className="mx-auto max-w-7xl px-4 py-6 pb-32 md:pb-8">
         {/* Breadcrumb */}
         <nav className="mb-4 text-sm text-muted-foreground">
-          <Link to="/" className="hover:text-primary">{t("breadcrumbHome")}</Link>
+          <Link to="/" className="hover:text-primary">
+            {t("breadcrumbHome")}
+          </Link>
           <span className="mx-2">/</span>
-          <Link to="/shop" className="hover:text-primary">{t("breadcrumbShop")}</Link>
+          <Link to="/shop" className="hover:text-primary">
+            {t("breadcrumbShop")}
+          </Link>
           <span className="mx-2">/</span>
           <span className="text-foreground">{product.name}</span>
         </nav>
@@ -138,7 +180,9 @@ function ProductPage() {
               {product.images.length > 1 && (
                 <>
                   <button
-                    onClick={() => setImgIdx((i) => (i - 1 + product.images.length) % product.images.length)}
+                    onClick={() =>
+                      setImgIdx((i) => (i - 1 + product.images.length) % product.images.length)
+                    }
                     className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-background/90 p-2 shadow"
                     aria-label="Previous image"
                   >
@@ -175,14 +219,20 @@ function ProductPage() {
             <div className="mt-2 flex items-center gap-2 text-sm">
               <Star className="h-4 w-4 fill-accent text-accent" />
               <span className="font-semibold">{product.rating}</span>
-              <span className="text-muted-foreground">({product.reviewCount} {t("reviews")})</span>
+              <span className="text-muted-foreground">
+                ({product.reviewCount} {t("reviews")})
+              </span>
             </div>
 
             <div className="mt-4 flex flex-wrap items-baseline gap-3">
-              <span className="text-3xl font-extrabold text-foreground">{formatPKR(product.price)}</span>
+              <span className="text-3xl font-extrabold text-foreground">
+                {formatPKR(product.price)}
+              </span>
               {product.oldPrice && (
                 <>
-                  <span className="text-lg text-muted-foreground line-through">{formatPKR(product.oldPrice)}</span>
+                  <span className="text-lg text-muted-foreground line-through">
+                    {formatPKR(product.oldPrice)}
+                  </span>
                   <span className="rounded-full bg-sale px-2.5 py-1 text-xs font-bold text-sale-foreground">
                     {t("youSave")} {formatPKR(product.oldPrice - product.price)}
                   </span>
@@ -204,17 +254,20 @@ function ProductPage() {
                 </button>
               </div>
               <div className="flex flex-wrap gap-2">
-                {product.sizes.map((s: number) => (
+                {product.sizes.map((row) => (
                   <button
-                    key={s}
-                    onClick={() => setSize(s)}
+                    key={row.size}
+                    disabled={row.stock <= 0}
+                    onClick={() => setSize(row.size)}
                     className={`h-12 min-w-12 rounded-lg border-2 px-3 text-base font-semibold transition ${
-                      size === s
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border bg-background hover:bg-secondary"
+                      row.stock <= 0
+                        ? "cursor-not-allowed border-border bg-secondary text-muted-foreground line-through"
+                        : size === row.size
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-background hover:bg-secondary"
                     }`}
                   >
-                    {s}
+                    {row.size}
                   </button>
                 ))}
               </div>
@@ -249,7 +302,10 @@ function ProductPage() {
             <div className="mt-6 grid gap-2 rounded-2xl border border-border bg-secondary/40 p-4 text-sm">
               <Line icon={<Wallet className="h-4 w-4 text-success" />} text={t("codBenefit")} />
               <Line icon={<Truck className="h-4 w-4 text-primary" />} text={t("deliveryBenefit")} />
-              <Line icon={<RefreshCw className="h-4 w-4 text-primary" />} text={t("exchangeBenefit")} />
+              <Line
+                icon={<RefreshCw className="h-4 w-4 text-primary" />}
+                text={t("exchangeBenefit")}
+              />
             </div>
 
             {/* Accordions */}

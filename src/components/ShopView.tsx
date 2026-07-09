@@ -1,9 +1,11 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Layout } from "./Layout";
 import { ProductCard } from "./ProductCard";
-import { products, type Product } from "@/data/products";
+import { getProducts } from "@/services/productService";
 import { Filter, Search, X } from "lucide-react";
 import { useLanguage } from "@/lib/language-context";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Category = "All" | "Men" | "Women";
 type Sort = "popular" | "newest" | "price-asc" | "price-desc";
@@ -17,7 +19,12 @@ export type ShopFilter = {
   subtitle?: string;
 };
 
-export function ShopView({ initialCategory = "All", saleOnly = false, title, subtitle }: ShopFilter) {
+export function ShopView({
+  initialCategory = "All",
+  saleOnly = false,
+  title,
+  subtitle,
+}: ShopFilter) {
   const { t } = useLanguage();
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<Category>(initialCategory);
@@ -39,43 +46,30 @@ export function ShopView({ initialCategory = "All", saleOnly = false, title, sub
     { key: "Women", label: t("filterWomen") },
   ];
 
-  const filtered = useMemo(() => {
-    let list: Product[] = [...products];
-    if (saleOnly) list = list.filter((p) => p.oldPrice && p.oldPrice > p.price);
-    if (query.trim()) {
-      const q = query.toLowerCase();
-      list = list.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          p.category.toLowerCase().includes(q) ||
-          p.gender.toLowerCase().includes(q) ||
-          p.colors.some((c) => c.toLowerCase().includes(q)) ||
-          p.sizes.some((s) => String(s) === q.replace(/[^0-9]/g, "")),
+  const priceRange = priceIdx !== null ? PRICE_RANGES[priceIdx] : null;
+  const { data, isLoading, isError, refetch, isFetching } = useQuery({
+    queryKey: ["products", { query, category, sizes, priceIdx, sort, saleOnly }],
+    queryFn: () =>
+      getProducts({
+        page: 1,
+        limit: 96,
+        search: query.trim() || undefined,
+        gender: category === "All" ? undefined : (category.toLowerCase() as "men" | "women"),
+        size: sizes.length === 1 ? String(sizes[0]) : undefined,
+        minPrice: priceRange?.min,
+        maxPrice: priceRange?.max === Infinity ? undefined : priceRange?.max,
+        sort,
+        onSale: saleOnly || undefined,
+      }),
+  });
+
+  const filtered =
+    data?.products.filter((product) => {
+      if (!sizes.length || sizes.length === 1) return true;
+      return sizes.some((size) =>
+        product.sizes.some((row) => row.size === String(size) && row.stock > 0),
       );
-    }
-    if (category !== "All") {
-      list = list.filter((p) => p.gender === category || p.gender === "Unisex");
-    }
-    if (sizes.length) list = list.filter((p) => sizes.some((s) => p.sizes.includes(s)));
-    if (priceIdx !== null) {
-      const r = PRICE_RANGES[priceIdx];
-      list = list.filter((p) => p.price >= r.min && p.price < r.max);
-    }
-    switch (sort) {
-      case "newest":
-        list = list.sort((a, b) => Number(!!b.newArrival) - Number(!!a.newArrival));
-        break;
-      case "price-asc":
-        list = list.sort((a, b) => a.price - b.price);
-        break;
-      case "price-desc":
-        list = list.sort((a, b) => b.price - a.price);
-        break;
-      default:
-        list = list.sort((a, b) => Number(!!b.bestSeller) - Number(!!a.bestSeller));
-    }
-    return list;
-  }, [query, category, sizes, priceIdx, sort, saleOnly]);
+    }) || [];
 
   const clearAll = () => {
     setQuery("");
@@ -169,9 +163,7 @@ export function ShopView({ initialCategory = "All", saleOnly = false, title, sub
           <h1 className="text-3xl font-extrabold text-foreground sm:text-4xl">
             {title ?? t("allShoesTitle")}
           </h1>
-          <p className="mt-2 text-muted-foreground">
-            {subtitle ?? t("allShoesSub")}
-          </p>
+          <p className="mt-2 text-muted-foreground">{subtitle ?? t("allShoesSub")}</p>
         </div>
 
         <div className="mb-4 flex items-center gap-3">
@@ -198,9 +190,33 @@ export function ShopView({ initialCategory = "All", saleOnly = false, title, sub
           <aside className="hidden md:block">{filtersUI}</aside>
           <div>
             <div className="mb-3 flex items-center justify-between text-sm text-muted-foreground">
-              <span>{t("showing")} {filtered.length} {t("shoesCount")}</span>
+              <span>
+                {t("showing")} {data?.pagination.total ?? filtered.length} {t("shoesCount")}
+              </span>
+              {isFetching && !isLoading && <span>{t("loadingShoes")}</span>}
             </div>
-            {filtered.length === 0 ? (
+            {isLoading ? (
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="rounded-2xl border border-border bg-card p-3">
+                    <Skeleton className="aspect-square rounded-xl" />
+                    <Skeleton className="mt-4 h-5 w-4/5" />
+                    <Skeleton className="mt-2 h-4 w-full" />
+                    <Skeleton className="mt-4 h-10 w-full rounded-lg" />
+                  </div>
+                ))}
+              </div>
+            ) : isError ? (
+              <div className="rounded-2xl border border-border bg-card p-10 text-center">
+                <p className="text-lg font-semibold">{t("couldNotLoadShoes")}</p>
+                <button
+                  onClick={() => refetch()}
+                  className="mt-4 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground"
+                >
+                  {t("tryAgain")}
+                </button>
+              </div>
+            ) : filtered.length === 0 ? (
               <div className="rounded-2xl border border-border bg-card p-10 text-center">
                 <p className="text-lg font-semibold">{t("noShoesFound")}</p>
                 <button
@@ -225,7 +241,11 @@ export function ShopView({ initialCategory = "All", saleOnly = false, title, sub
         <div className="fixed inset-0 z-50 flex flex-col bg-background md:hidden">
           <div className="flex items-center justify-between border-b border-border px-4 py-4">
             <h3 className="text-lg font-bold">{t("filterShoes")}</h3>
-            <button onClick={() => setMobileFiltersOpen(false)} className="rounded-md p-2" aria-label="Close">
+            <button
+              onClick={() => setMobileFiltersOpen(false)}
+              className="rounded-md p-2"
+              aria-label="Close"
+            >
               <X className="h-5 w-5" />
             </button>
           </div>
