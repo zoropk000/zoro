@@ -13,6 +13,7 @@ function buildProductQuery(query, publicOnly = true) {
   const filter = {};
   if (publicOnly) filter.status = "active";
 
+  if (query.slug) filter.slug = slugify(query.slug);
   if (query.gender) filter.gender = query.gender;
   if (query.ids) {
     const ids = String(query.ids)
@@ -49,6 +50,10 @@ function buildProductQuery(query, publicOnly = true) {
     ];
   }
   return filter;
+}
+
+function getProductId(req) {
+  return req.params.id || req.query.id;
 }
 
 function buildSort(sort) {
@@ -123,8 +128,9 @@ export const adminGetProducts = asyncHandler(async (req, res) => {
 });
 
 export const adminGetProduct = asyncHandler(async (req, res) => {
-  if (!mongoose.isValidObjectId(req.params.id)) throw new ApiError("Invalid product ID", 400);
-  const product = await Product.findById(req.params.id).lean();
+  const id = getProductId(req);
+  if (!mongoose.isValidObjectId(id)) throw new ApiError("Invalid product ID", 400);
+  const product = await Product.findById(id).lean();
   if (!product) throw new ApiError("Product not found", 404);
   res.json({ success: true, product });
 });
@@ -169,8 +175,9 @@ export const createProduct = asyncHandler(async (req, res) => {
 });
 
 export const updateProduct = asyncHandler(async (req, res) => {
-  if (!mongoose.isValidObjectId(req.params.id)) throw new ApiError("Invalid product ID", 400);
-  const existing = await Product.findById(req.params.id);
+  const id = getProductId(req);
+  if (!mongoose.isValidObjectId(id)) throw new ApiError("Invalid product ID", 400);
+  const existing = await Product.findById(id);
   if (!existing) throw new ApiError("Product not found", 404);
 
   const oldPublicIds = new Set(existing.images.map((img) => img.publicId));
@@ -188,8 +195,9 @@ export const updateProduct = asyncHandler(async (req, res) => {
 });
 
 export const deleteProduct = asyncHandler(async (req, res) => {
-  if (!mongoose.isValidObjectId(req.params.id)) throw new ApiError("Invalid product ID", 400);
-  const product = await Product.findById(req.params.id);
+  const id = getProductId(req);
+  if (!mongoose.isValidObjectId(id)) throw new ApiError("Invalid product ID", 400);
+  const product = await Product.findById(id);
   if (!product) throw new ApiError("Product not found", 404);
 
   await Promise.all(
@@ -200,12 +208,13 @@ export const deleteProduct = asyncHandler(async (req, res) => {
 });
 
 export const updateProductStatus = asyncHandler(async (req, res) => {
-  if (!mongoose.isValidObjectId(req.params.id)) throw new ApiError("Invalid product ID", 400);
+  const id = getProductId(req);
+  if (!mongoose.isValidObjectId(id)) throw new ApiError("Invalid product ID", 400);
   const { status } = req.body;
   if (!["active", "draft", "out-of-stock"].includes(status)) {
     throw new ApiError("Invalid product status", 400);
   }
-  const product = await Product.findById(req.params.id);
+  const product = await Product.findById(id);
   if (!product) throw new ApiError("Product not found", 404);
   product.status = status;
   await product.save();
@@ -213,8 +222,9 @@ export const updateProductStatus = asyncHandler(async (req, res) => {
 });
 
 export const updateProductInventory = asyncHandler(async (req, res) => {
-  if (!mongoose.isValidObjectId(req.params.id)) throw new ApiError("Invalid product ID", 400);
-  const product = await Product.findById(req.params.id);
+  const id = getProductId(req);
+  if (!mongoose.isValidObjectId(id)) throw new ApiError("Invalid product ID", 400);
+  const product = await Product.findById(id);
   if (!product) throw new ApiError("Product not found", 404);
 
   if (!Array.isArray(req.body.sizes) || req.body.sizes.length === 0) {

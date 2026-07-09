@@ -65,6 +65,10 @@ async function reduceInventory(items) {
   }
 }
 
+function getOrderId(req) {
+  return req.params.id || req.query.id;
+}
+
 export const createOrder = asyncHandler(async (req, res) => {
   const { customer, items, paymentMethod, notes } = req.body;
   if (!customer?.name || !customer?.phone || !customer?.city || !customer?.address) {
@@ -202,19 +206,21 @@ export const adminGetOrders = asyncHandler(async (req, res) => {
 });
 
 export const adminGetOrder = asyncHandler(async (req, res) => {
-  if (!mongoose.isValidObjectId(req.params.id)) throw new ApiError("Invalid order ID", 400);
-  const order = await Order.findById(req.params.id).lean();
+  const id = getOrderId(req);
+  if (!mongoose.isValidObjectId(id)) throw new ApiError("Invalid order ID", 400);
+  const order = await Order.findById(id).lean();
   if (!order) throw new ApiError("Order not found", 404);
   res.json({ success: true, order });
 });
 
 export const updateOrderStatus = asyncHandler(async (req, res) => {
-  if (!mongoose.isValidObjectId(req.params.id)) throw new ApiError("Invalid order ID", 400);
+  const id = getOrderId(req);
+  if (!mongoose.isValidObjectId(id)) throw new ApiError("Invalid order ID", 400);
   const { status } = req.body;
   const allowed = ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"];
   if (!allowed.includes(status)) throw new ApiError("Invalid order status", 400);
 
-  const order = await Order.findById(req.params.id);
+  const order = await Order.findById(id);
   if (!order) throw new ApiError("Order not found", 404);
   if (status === "cancelled" && order.orderStatus !== "cancelled" && order.inventoryReduced) {
     await restoreInventory(order);
@@ -225,12 +231,13 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
 });
 
 export const updatePaymentStatus = asyncHandler(async (req, res) => {
-  if (!mongoose.isValidObjectId(req.params.id)) throw new ApiError("Invalid order ID", 400);
+  const id = getOrderId(req);
+  if (!mongoose.isValidObjectId(id)) throw new ApiError("Invalid order ID", 400);
   const { status } = req.body;
   const allowed = ["pending", "paid", "verification-needed", "failed"];
   if (!allowed.includes(status)) throw new ApiError("Invalid payment status", 400);
   const order = await Order.findByIdAndUpdate(
-    req.params.id,
+    id,
     { paymentStatus: status },
     { new: true },
   );

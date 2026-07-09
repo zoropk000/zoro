@@ -44,6 +44,7 @@ export type Product = {
 export type ProductFilters = {
   page?: number;
   limit?: number;
+  slug?: string;
   gender?: "men" | "women";
   featured?: boolean;
   bestSeller?: boolean;
@@ -78,11 +79,6 @@ type ProductListResponse = {
   success: true;
   products: BackendProduct[];
   pagination: { page: number; pages: number; total: number; limit: number };
-};
-
-type ProductResponse = {
-  success: true;
-  product: BackendProduct;
 };
 
 function splitLines(value?: string): string[] {
@@ -136,8 +132,12 @@ export async function getProducts(filters: ProductFilters = {}) {
 }
 
 export async function getProduct(slug: string) {
-  const data = await apiRequest<ProductResponse>(`/products/${slug}`);
-  return mapProduct(data.product);
+  const data = await apiRequest<ProductListResponse>(
+    `/products${toQuery({ slug, limit: 1 })}`,
+  );
+  const product = data.products[0];
+  if (!product) throw new Error("Product not found");
+  return mapProduct(product);
 }
 
 export function getDiscount(product: Product): number {

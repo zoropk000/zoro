@@ -59,6 +59,10 @@ type ProductListResponse = {
 type ProductResponse = { success: true; product: BackendProduct };
 type MutationResponse = { success: true; product?: BackendProduct; message?: string };
 
+function idQuery(id: string) {
+  return `?id=${encodeURIComponent(id)}`;
+}
+
 export const adminApi = {
   login(email: string, password: string) {
     return apiRequest<{ success: true; admin: { id: string; name: string; email: string } }>(
@@ -82,7 +86,7 @@ export const adminApi = {
     return { ...data, products: data.products.map(mapProduct) };
   },
   async product(id: string) {
-    const data = await apiRequest<ProductResponse>(`/admin/products/${id}`);
+    const data = await apiRequest<ProductResponse>(`/admin/products/by-id${idQuery(id)}`);
     return { ...data, product: mapProduct(data.product) };
   },
   createProduct(payload: ProductPayload) {
@@ -92,19 +96,21 @@ export const adminApi = {
     });
   },
   updateProduct(id: string, payload: ProductPayload) {
-    return apiRequest<MutationResponse>(`/admin/products/${id}`, {
+    return apiRequest<MutationResponse>(`/admin/products/by-id${idQuery(id)}`, {
       method: "PUT",
       body: JSON.stringify(payload),
     });
   },
   deleteProduct(id: string) {
-    return apiRequest<MutationResponse>(`/admin/products/${id}`, { method: "DELETE" });
+    return apiRequest<MutationResponse>(`/admin/products/by-id${idQuery(id)}`, {
+      method: "DELETE",
+    });
   },
   updateInventory(
     id: string,
     payload: { sizes: ProductSize[]; status?: "active" | "draft" | "out-of-stock" },
   ) {
-    return apiRequest<MutationResponse>(`/admin/products/${id}/inventory`, {
+    return apiRequest<MutationResponse>(`/admin/products/inventory${idQuery(id)}`, {
       method: "PATCH",
       body: JSON.stringify(payload),
     });
@@ -124,19 +130,22 @@ export const adminApi = {
     );
   },
   order(id: string) {
-    return apiRequest<{ success: true; order: AdminOrder }>(`/admin/orders/${id}`);
+    return apiRequest<{ success: true; order: AdminOrder }>(`/admin/orders/by-id${idQuery(id)}`);
   },
   updateOrderStatus(id: string, status: string) {
-    return apiRequest<{ success: true; order: AdminOrder }>(`/admin/orders/${id}/status`, {
+    return apiRequest<{ success: true; order: AdminOrder }>(`/admin/orders/status${idQuery(id)}`, {
       method: "PATCH",
       body: JSON.stringify({ status }),
     });
   },
   updatePaymentStatus(id: string, status: string) {
-    return apiRequest<{ success: true; order: AdminOrder }>(`/admin/orders/${id}/payment-status`, {
-      method: "PATCH",
-      body: JSON.stringify({ status }),
-    });
+    return apiRequest<{ success: true; order: AdminOrder }>(
+      `/admin/orders/payment-status${idQuery(id)}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      },
+    );
   },
   dashboard<T = unknown>(path: string) {
     return apiRequest<T>(`/admin/dashboard/${path}`);
