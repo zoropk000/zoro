@@ -183,9 +183,9 @@ export const adminApi = {
     );
   },
   confirmOrder(id: string, minDeliveryDays: number, maxDeliveryDays: number) {
-    return apiRequest<{ success: true; order: AdminOrder }>(`/admin/orders/${id}/confirm`, {
+    return apiRequest<{ success: true; order: AdminOrder }>(`/admin/orders/status${idQuery(id)}`, {
       method: "PATCH",
-      body: JSON.stringify({ minDeliveryDays, maxDeliveryDays }),
+      body: JSON.stringify({ status: "confirmed", minDeliveryDays, maxDeliveryDays }),
     });
   },
   resendEmail(id: string, emailType: string) {

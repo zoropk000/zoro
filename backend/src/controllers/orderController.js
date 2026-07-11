@@ -406,7 +406,7 @@ export const confirmOrder = asyncHandler(async (req, res) => {
 export const updateOrderStatus = asyncHandler(async (req, res) => {
   const id = getOrderId(req);
   if (!mongoose.isValidObjectId(id)) throw new ApiError("Invalid order ID", 400);
-  const { status } = req.body;
+  const { status, minDeliveryDays, maxDeliveryDays } = req.body;
   const allowed = [
     "pending",
     "confirmed",
@@ -422,7 +422,44 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
   const order = await Order.findById(id);
   if (!order) throw new ApiError("Order not found", 404);
 
+  if (status === "confirmed" && order.orderStatus === "cancelled") {
+    throw new ApiError("Cannot confirm a cancelled order", 400);
+  }
+
+  const hasDeliveryEstimate = minDeliveryDays !== undefined || maxDeliveryDays !== undefined;
+  let minDays;
+  let maxDays;
+  let now;
+
+  if (status === "confirmed") {
+    now = new Date();
+    order.confirmedAt = order.confirmedAt || now;
+    order.trackingStartedAt = order.trackingStartedAt || now;
+
+    if (hasDeliveryEstimate) {
+      minDays = Number(minDeliveryDays);
+      maxDays = Number(maxDeliveryDays);
+
+      if (isNaN(minDays) || isNaN(maxDays) || minDays <= 0 || maxDays <= 0) {
+        throw new ApiError("Minimum and maximum delivery days must be positive numbers", 400);
+      }
+      if (maxDays < minDays) {
+        throw new ApiError("Maximum delivery days cannot be less than minimum delivery days", 400);
+      }
+
+      order.deliveryEstimate = {
+        minDays,
+        maxDays,
+        estimatedStartDate: addWorkingDays(now, minDays),
+        estimatedEndDate: addWorkingDays(now, maxDays),
+      };
+    }
+  }
+
   if (order.orderStatus === status) {
+    if (status === "confirmed") {
+      await order.save();
+    }
     return res.json({ success: true, order });
   }
 
@@ -493,15 +530,18 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
     status,
     title: details.title,
     titleUrdu: details.titleUrdu,
-    description: details.description,
+    description:
+      status === "confirmed" && minDays && maxDays
+        ? `Your order has been confirmed (Delivery estimated in ${minDays}-${maxDays} working days).`
+        : details.description,
     descriptionUrdu: details.descriptionUrdu,
-    timestamp: new Date(),
+    timestamp: now || new Date(),
   });
 
   await order.save();
 
-  if (["shipped", "out_for_delivery", "delivered"].includes(status)) {
-    const emailType = status === "out_for_delivery" ? "out_for_delivery" : status;
+  if (["confirmed", "shipped", "out_for_delivery", "delivered"].includes(status)) {
+    const emailType = status === "confirmed" ? "orderConfirmed" : status;
     await sendAndSaveEmailStatus(order, emailType);
   }
 
