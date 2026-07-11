@@ -7,6 +7,10 @@ import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { makeOrderNumber } from "../utils/orderNumber.js";
 import { sendOrderStatusEmail } from "../utils/email.js";
+import {
+  isWhatsAppCloudConfigured,
+  sendOrderConfirmationWhatsAppCloud,
+} from "../utils/whatsappCloud.js";
 
 function normalizePhone(phone) {
   return String(phone || "")
@@ -70,6 +74,73 @@ async function reduceInventory(items) {
 
 function getOrderId(req) {
   return req.params.id || req.query.id;
+}
+
+async function saveEmailStatus(orderId, emailType, emailRes) {
+  const order = await Order.findById(orderId);
+  if (!order) return;
+
+  order.emailStatus[emailType] = {
+    sent: emailRes.success,
+    sentAt: emailRes.success ? new Date() : null,
+    error: emailRes.success ? null : emailRes.error || "Failed to send email",
+  };
+
+  await order.save();
+}
+
+async function sendAndSaveEmailStatus(order, emailType) {
+  try {
+    const emailRes = await sendOrderStatusEmail(order, emailType);
+    await saveEmailStatus(order._id, emailType, emailRes);
+    return emailRes;
+  } catch (error) {
+    const message = error.message || "Failed to send email";
+    console.error(`Email background failure (${emailType}):`, message);
+    const emailRes = { success: false, error: message };
+    await saveEmailStatus(order._id, emailType, emailRes);
+    return emailRes;
+  }
+}
+
+async function sendAndSaveWhatsAppConfirmation(order) {
+  if (process.env.VERCEL || isWhatsAppCloudConfigured()) {
+    const result = await sendOrderConfirmationWhatsAppCloud(order);
+    if (result.success) {
+      const ord = await Order.findById(order._id);
+      if (ord) {
+        ord.whatsappConfirmationSent = true;
+        await ord.save();
+      }
+    } else if (result.skipped) {
+      console.warn(result.error);
+    } else {
+      console.error("WhatsApp Cloud confirmation failed:", result.error);
+    }
+    return result;
+  }
+
+  const whatsappModulePath = "../utils/" + "whatsapp.js";
+  import(/* @vite-ignore */ whatsappModulePath)
+    .then((module) => {
+      module
+        .sendOrderConfirmationWhatsApp(order)
+        .then(async () => {
+          const ord = await Order.findById(order._id);
+          if (ord) {
+            ord.whatsappConfirmationSent = true;
+            await ord.save();
+          }
+        })
+        .catch((err) => {
+          console.error("WhatsApp confirmation background failure:", err);
+        });
+    })
+    .catch((err) => {
+      console.error("Failed to dynamically load WhatsApp module:", err);
+    });
+
+  return { success: false, skipped: true };
 }
 
 export const createOrder = asyncHandler(async (req, res) => {
@@ -152,54 +223,10 @@ export const createOrder = asyncHandler(async (req, res) => {
     ],
   });
 
-  // Asynchronously send WhatsApp confirmation (skipped on Vercel)
-  if (!order.whatsappConfirmationSent && !process.env.VERCEL) {
-    const whatsappModulePath = "../utils/" + "whatsapp.js";
-    import(/* @vite-ignore */ whatsappModulePath)
-      .then((module) => {
-        module
-          .sendOrderConfirmationWhatsApp(order)
-          .then(async () => {
-            const ord = await Order.findById(order._id);
-            if (ord) {
-              ord.whatsappConfirmationSent = true;
-              await ord.save();
-            }
-          })
-          .catch((err) => {
-            console.error("WhatsApp confirmation background failure:", err);
-          });
-      })
-      .catch((err) => {
-        console.error("Failed to dynamically load WhatsApp module:", err);
-      });
-  }
-
-  // Asynchronously send "Order Received" email
-  sendOrderStatusEmail(order, "orderReceived")
-    .then(async (emailRes) => {
-      const ord = await Order.findById(order._id);
-      if (ord) {
-        ord.emailStatus.orderReceived = {
-          sent: emailRes.success,
-          sentAt: emailRes.success ? new Date() : null,
-          error: emailRes.success ? null : emailRes.error,
-        };
-        await ord.save();
-      }
-    })
-    .catch(async (err) => {
-      console.error("Order Received email background failure:", err);
-      const ord = await Order.findById(order._id);
-      if (ord) {
-        ord.emailStatus.orderReceived = {
-          sent: false,
-          sentAt: null,
-          error: err.message || "Failed to send email",
-        };
-        await ord.save();
-      }
-    });
+  await Promise.all([
+    sendAndSaveEmailStatus(order, "orderReceived"),
+    order.whatsappConfirmationSent ? undefined : sendAndSaveWhatsAppConfirmation(order),
+  ]);
 
   res.status(201).json({
     success: true,
@@ -363,31 +390,7 @@ export const confirmOrder = asyncHandler(async (req, res) => {
 
   await order.save();
 
-  // Asynchronously send "Order Confirmed" email
-  sendOrderStatusEmail(order, "orderConfirmed")
-    .then(async (emailRes) => {
-      const ord = await Order.findById(order._id);
-      if (ord) {
-        ord.emailStatus.orderConfirmed = {
-          sent: emailRes.success,
-          sentAt: emailRes.success ? new Date() : null,
-          error: emailRes.success ? null : emailRes.error,
-        };
-        await ord.save();
-      }
-    })
-    .catch(async (err) => {
-      console.error("Order Confirmed email background failure:", err);
-      const ord = await Order.findById(order._id);
-      if (ord) {
-        ord.emailStatus.orderConfirmed = {
-          sent: false,
-          sentAt: null,
-          error: err.message || "Failed to send email",
-        };
-        await ord.save();
-      }
-    });
+  await sendAndSaveEmailStatus(order, "orderConfirmed");
 
   res.json({
     success: true,
@@ -499,21 +502,7 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
 
   if (["shipped", "out_for_delivery", "delivered"].includes(status)) {
     const emailType = status === "out_for_delivery" ? "out_for_delivery" : status;
-    sendOrderStatusEmail(order, emailType)
-      .then(async (emailRes) => {
-        const ord = await Order.findById(order._id);
-        if (ord) {
-          ord.emailStatus[emailType] = {
-            sent: emailRes.success,
-            sentAt: emailRes.success ? new Date() : null,
-            error: emailRes.success ? null : emailRes.error,
-          };
-          await ord.save();
-        }
-      })
-      .catch((err) => {
-        console.error(`Failed to send background email for status ${status}:`, err);
-      });
+    await sendAndSaveEmailStatus(order, emailType);
   }
 
   res.json({ success: true, order });

@@ -268,7 +268,7 @@ export async function sendEmail({ to, subject, html }) {
     console.warn(
       "📧 Gmail not configured. Set GMAIL_USER and GMAIL_APP_PASSWORD in backend/.env to enable emails.",
     );
-    return { skipped: true };
+    return { success: false, skipped: true, error: "Gmail SMTP is not configured" };
   }
 
   const fromName = process.env.EMAIL_FROM_NAME || "ZORO";
@@ -348,6 +348,13 @@ export async function sendOrderStatusEmail(order, statusType) {
 
   try {
     const res = await sendEmail({ to: order.customer.email, subject, html });
+    if (!res.success) {
+      return {
+        success: false,
+        error: res.error || "Email was not sent",
+        skipped: res.skipped,
+      };
+    }
     return { success: true, res };
   } catch (error) {
     console.error(
