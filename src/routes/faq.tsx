@@ -38,11 +38,13 @@ function FAQPage() {
                 className="flex w-full items-center justify-between px-5 py-4 text-left text-base font-semibold text-foreground"
               >
                 {f.q}
-                {open === i ? <ChevronUp className="h-5 w-5 shrink-0 text-primary" /> : <ChevronDown className="h-5 w-5 shrink-0 text-muted-foreground" />}
+                {open === i ? (
+                  <ChevronUp className="h-5 w-5 shrink-0 text-primary" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 shrink-0 text-muted-foreground" />
+                )}
               </button>
-              {open === i && (
-                <div className="px-5 pb-4 text-sm text-muted-foreground">{f.a}</div>
-              )}
+              {open === i && <div className="px-5 pb-4 text-sm text-muted-foreground">{f.a}</div>}
             </div>
           ))}
         </div>

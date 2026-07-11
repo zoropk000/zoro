@@ -18,7 +18,11 @@ export function SizeGuideModal({ onClose }: { onClose: () => void }) {
       <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-background p-6 sm:rounded-2xl">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-xl font-bold">{t("sizeGuideTitle")}</h3>
-          <button onClick={onClose} className="rounded-md p-2 hover:bg-secondary" aria-label="Close">
+          <button
+            onClick={onClose}
+            className="rounded-md p-2 hover:bg-secondary"
+            aria-label="Close"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>

@@ -10,8 +10,18 @@ function formatDate(date) {
   const d = new Date(date);
   const day = d.getDate();
   const months = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
   const month = months[d.getMonth()];
   const year = d.getFullYear();
@@ -32,7 +42,7 @@ function getPaymentMethodLabel(method) {
   const map = {
     cod: "Cash on Delivery",
     easypaisa_jazzcash: "Easypaisa / JazzCash",
-    meezan_bank: "Meezan Bank Transfer"
+    meezan_bank: "Meezan Bank Transfer",
   };
   return map[method] || "Cash on Delivery";
 }
@@ -63,7 +73,9 @@ export function buildEmailTemplate({ order, title, message, showDeliveryEstimate
   const trackingUrl = `${frontendUrl}/track-order?orderNumber=${order.orderNumber}&phone=${order.customer.phone}`;
 
   // Generate order items rows
-  const itemsHtml = order.items.map(item => `
+  const itemsHtml = order.items
+    .map(
+      (item) => `
     <tr style="border-bottom: 1px solid #e2e8f0;">
       <td style="padding: 12px 8px; vertical-align: middle;">
         <table border="0" cellpadding="0" cellspacing="0" style="width: 100%;">
@@ -80,7 +92,9 @@ export function buildEmailTemplate({ order, title, message, showDeliveryEstimate
         ${formatPKR(item.price * item.quantity)}
       </td>
     </tr>
-  `).join("");
+  `,
+    )
+    .join("");
 
   // Determine delivery estimate block
   let deliveryBlock = "";
@@ -110,9 +124,10 @@ export function buildEmailTemplate({ order, title, message, showDeliveryEstimate
   }
 
   // Determine order status block
-  const statusDisplay = order.orderStatus === "pending"
-    ? "⏳ Waiting for Confirmation"
-    : order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1);
+  const statusDisplay =
+    order.orderStatus === "pending"
+      ? "⏳ Waiting for Confirmation"
+      : order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1);
 
   return `
     <!DOCTYPE html>
@@ -250,7 +265,9 @@ export async function sendEmail({ to, subject, html }) {
   const transporter = createTransporter();
 
   if (!transporter) {
-    console.warn("📧 Gmail not configured. Set GMAIL_USER and GMAIL_APP_PASSWORD in backend/.env to enable emails.");
+    console.warn(
+      "📧 Gmail not configured. Set GMAIL_USER and GMAIL_APP_PASSWORD in backend/.env to enable emails.",
+    );
     return { skipped: true };
   }
 
@@ -293,28 +310,32 @@ export async function sendOrderStatusEmail(order, statusType) {
     case "orderConfirmed":
       subject = `🎉 Order Confirmed — #${order.orderNumber} | ZORO`;
       title = "Your order is confirmed";
-      message = "Great news! Your order has been officially confirmed by our team. Please see your estimated delivery timeframe below. We'll start preparing your shoes right away!";
+      message =
+        "Great news! Your order has been officially confirmed by our team. Please see your estimated delivery timeframe below. We'll start preparing your shoes right away!";
       showDeliveryEstimate = true;
       break;
 
     case "shipped":
       subject = `🚚 Order Shipped — #${order.orderNumber} | ZORO`;
       title = "Your order has been shipped";
-      message = "Exciting news! Your shoes have been packed and handed over to our courier partner. They are on their way to you now.";
+      message =
+        "Exciting news! Your shoes have been packed and handed over to our courier partner. They are on their way to you now.";
       showDeliveryEstimate = true;
       break;
 
     case "out_for_delivery":
       subject = `🏠 Your Shoes Are Coming Today — #${order.orderNumber} | ZORO`;
       title = "Your shoes are coming today";
-      message = "Get ready! The delivery rider has picked up your parcel and is out for delivery today. Please keep your phone active so the rider can contact you.";
+      message =
+        "Get ready! The delivery rider has picked up your parcel and is out for delivery today. Please keep your phone active so the rider can contact you.";
       showDeliveryEstimate = true;
       break;
 
     case "delivered":
       subject = `✅ Order Delivered — #${order.orderNumber} | ZORO`;
       title = "Your order has been delivered";
-      message = "Enjoy your new shoes! Our courier partner confirmed that your order has been successfully delivered. Thank you for shopping with ZORO.";
+      message =
+        "Enjoy your new shoes! Our courier partner confirmed that your order has been successfully delivered. Thank you for shopping with ZORO.";
       showDeliveryEstimate = false;
       break;
 
@@ -329,7 +350,10 @@ export async function sendOrderStatusEmail(order, statusType) {
     const res = await sendEmail({ to: order.customer.email, subject, html });
     return { success: true, res };
   } catch (error) {
-    console.error(`Error sending email (${statusType}) for order ${order.orderNumber}:`, error.message);
+    console.error(
+      `Error sending email (${statusType}) for order ${order.orderNumber}:`,
+      error.message,
+    );
     return { success: false, error: error.message };
   }
 }

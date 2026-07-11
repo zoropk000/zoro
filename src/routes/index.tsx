@@ -20,8 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { trackOrder } from "@/services/orderService";
 
 // Temporary transparent placeholder. Replace with the real ZORO product cutout before production.
-const unboxingShoeImage =
-  "https://pngimg.com/uploads/running_shoes/running_shoes_PNG5822.png";
+const unboxingShoeImage = "https://pngimg.com/uploads/running_shoes/running_shoes_PNG5822.png";
 
 const HOME_CATEGORIES = [
   {
@@ -73,7 +72,6 @@ function HomePage() {
 
   useEffect(() => {
     let animationContext: { revert: () => void } | undefined;
-    let revealObserver: IntersectionObserver | undefined;
     const revealAnimations = new Set<Animation>();
     let cancelled = false;
 
@@ -88,9 +86,7 @@ function HomePage() {
 
     const getRevealItems = (target: HTMLElement) => {
       if (target.hasAttribute("data-product-reveal")) {
-        return Array.from(
-          target.querySelectorAll<HTMLElement>("[data-product-grid] > *"),
-        );
+        return Array.from(target.querySelectorAll<HTMLElement>("[data-product-grid] > *"));
       }
 
       return Array.from(target.children).filter(
@@ -109,7 +105,7 @@ function HomePage() {
       });
     });
 
-    revealObserver = new IntersectionObserver(
+    const revealObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (!entry.isIntersecting) return;
@@ -311,11 +307,7 @@ function HomePage() {
               },
               0,
             )
-            .to(
-              boxWrap,
-              { yPercent: -2, scale: 1.055, duration: 0.12, ease: "power1.inOut" },
-              0.14,
-            )
+            .to(boxWrap, { yPercent: -2, scale: 1.055, duration: 0.12, ease: "power1.inOut" }, 0.14)
 
             // 2. The lid opens around its real rear hinge. The shoe remains hidden.
             .to(
@@ -340,11 +332,7 @@ function HomePage() {
               },
               0.38,
             )
-            .to(
-              shoeGlow,
-              { autoAlpha: 0.5, scale: 1, duration: 0.12, ease: "power2.out" },
-              0.4,
-            )
+            .to(shoeGlow, { autoAlpha: 0.5, scale: 1, duration: 0.12, ease: "power2.out" }, 0.4)
 
             // 3. The shoe first appears inside the box, masked by the front wall.
             .to(
@@ -397,11 +385,7 @@ function HomePage() {
               },
               0.75,
             )
-            .to(
-              floorShadow,
-              { autoAlpha: 0.18, scaleX: 0.78, duration: 0.16 },
-              0.75,
-            )
+            .to(floorShadow, { autoAlpha: 0.18, scaleX: 0.78, duration: 0.16 }, 0.75)
             .to(
               shoe,
               {
@@ -414,18 +398,10 @@ function HomePage() {
               },
               0.78,
             )
-            .to(
-              shoeGlow,
-              { autoAlpha: 0.22, scale: 1.35, duration: 0.14, ease: "sine.inOut" },
-              0.8,
-            )
+            .to(shoeGlow, { autoAlpha: 0.22, scale: 1.35, duration: 0.14, ease: "sine.inOut" }, 0.8)
 
             // 5. Everything exits before the pin releases, so the next section never overlaps.
-            .to(
-              [boxWrap, shoeGlow],
-              { autoAlpha: 0, duration: 0.1, ease: "power1.in" },
-              0.91,
-            )
+            .to([boxWrap, shoeGlow], { autoAlpha: 0, duration: 0.1, ease: "power1.in" }, 0.91)
             .to(
               shoe,
               {
@@ -490,7 +466,7 @@ function HomePage() {
                         : orderDetails.orderStatus === "confirmed"
                           ? t("statusConfirmed")
                           : orderDetails.orderStatus === "preparing" ||
-                            orderDetails.orderStatus === "processing"
+                              orderDetails.orderStatus === "processing"
                             ? t("statusPrepared")
                             : orderDetails.orderStatus === "shipped"
                               ? t("statusShipped")
@@ -537,7 +513,10 @@ function HomePage() {
                 {t("heroTitle")}
               </h1>
 
-              <p data-hero-secondary className="mt-6 max-w-lg text-base leading-relaxed text-muted-foreground sm:text-lg">
+              <p
+                data-hero-secondary
+                className="mt-6 max-w-lg text-base leading-relaxed text-muted-foreground sm:text-lg"
+              >
                 {t("heroSubtitle")}
                 <br />
                 <span className="font-semibold text-foreground">{t("heroPay")}</span>
@@ -624,10 +603,7 @@ function HomePage() {
             <div className="grid overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-lg sm:grid-cols-3">
               <TrustPoint icon={<Truck className="h-5 w-5" />} label={t("deliveryAcrossPak")} />
               <TrustPoint icon={<Wallet className="h-5 w-5" />} label={t("cashOnDelivery")} />
-              <TrustPoint
-                icon={<RefreshCw className="h-5 w-5" />}
-                label={t("easySizeExchange")}
-              />
+              <TrustPoint icon={<RefreshCw className="h-5 w-5" />} label={t("easySizeExchange")} />
             </div>
           </div>
         </section>
@@ -636,8 +612,15 @@ function HomePage() {
         <ShoeBoxScrollScene />
 
         {/* Shop by Category — Men & Women only */}
-        <section data-section className="relative z-0 mx-auto max-w-7xl px-4 py-16 sm:py-20 lg:py-24 [content-visibility:auto] [contain-intrinsic-size:1000px]">
-          <SectionTitle title={t("shopByCategory")} subtitle={t("shopByCategorySub")} align="left" />
+        <section
+          data-section
+          className="relative z-0 mx-auto max-w-7xl px-4 py-16 sm:py-20 lg:py-24 [content-visibility:auto] [contain-intrinsic-size:1000px]"
+        >
+          <SectionTitle
+            title={t("shopByCategory")}
+            subtitle={t("shopByCategorySub")}
+            align="left"
+          />
 
           <div data-category-grid data-reveal-group className="grid gap-5 lg:grid-cols-2 lg:gap-6">
             {HOME_CATEGORIES.map((c, index) => (
@@ -645,8 +628,9 @@ function HomePage() {
                 data-category-card
                 key={c.to}
                 to={c.to}
-                className={`group relative overflow-hidden rounded-[1.75rem] bg-secondary shadow-sm transition duration-500 hover:-translate-y-1 hover:shadow-2xl ${index === 1 ? "lg:mt-14" : ""
-                  }`}
+                className={`group relative overflow-hidden rounded-[1.75rem] bg-secondary shadow-sm transition duration-500 hover:-translate-y-1 hover:shadow-2xl ${
+                  index === 1 ? "lg:mt-14" : ""
+                }`}
               >
                 <div className="aspect-[4/5] sm:aspect-[5/4] lg:aspect-[4/5] xl:aspect-[5/4]">
                   <img
@@ -681,7 +665,11 @@ function HomePage() {
         </section>
 
         {/* Best Sellers */}
-        <section data-section data-product-reveal className="relative border-y border-border/60 bg-secondary/35 py-16 sm:py-20 lg:py-24 [content-visibility:auto] [contain-intrinsic-size:900px]">
+        <section
+          data-section
+          data-product-reveal
+          className="relative border-y border-border/60 bg-secondary/35 py-16 sm:py-20 lg:py-24 [content-visibility:auto] [contain-intrinsic-size:900px]"
+        >
           <div className="mx-auto max-w-7xl px-4">
             <SectionTitle title={t("bestSellers")} subtitle={t("bestSellersSub")} align="left" />
 
@@ -707,7 +695,10 @@ function HomePage() {
                 </button>
               </div>
             ) : bestSellers.length > 0 ? (
-              <div data-product-grid className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
+              <div
+                data-product-grid
+                className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4"
+              >
                 {bestSellers.map((p) => (
                   <div
                     key={p.id}
@@ -729,12 +720,19 @@ function HomePage() {
         </section>
 
         {/* How to Order */}
-        <section data-section className="mx-auto max-w-7xl px-4 py-16 sm:py-20 lg:py-24 [content-visibility:auto] [contain-intrinsic-size:900px]">
+        <section
+          data-section
+          className="mx-auto max-w-7xl px-4 py-16 sm:py-20 lg:py-24 [content-visibility:auto] [contain-intrinsic-size:900px]"
+        >
           <div className="grid gap-8 lg:grid-cols-12 lg:items-center lg:gap-12">
             <div className="lg:col-span-5">
               <SectionTitle title={t("howToOrder")} subtitle={t("howToOrderSub")} align="left" />
 
-              <div data-step-list data-reveal-group className="divide-y divide-border/80 border-y border-border/80">
+              <div
+                data-step-list
+                data-reveal-group
+                className="divide-y divide-border/80 border-y border-border/80"
+              >
                 <Step n={1} title={t("step1Title")} text={t("step1Text")} />
                 <Step n={2} title={t("step2Title")} text={t("step2Text")} />
                 <Step n={3} title={t("step3Title")} text={t("step3Text")} />
@@ -778,11 +776,18 @@ function HomePage() {
         </section>
 
         {/* Why Trust Us */}
-        <section data-section className="bg-secondary/35 py-16 sm:py-20 lg:py-24 [content-visibility:auto] [contain-intrinsic-size:700px]">
+        <section
+          data-section
+          className="bg-secondary/35 py-16 sm:py-20 lg:py-24 [content-visibility:auto] [contain-intrinsic-size:700px]"
+        >
           <div className="mx-auto max-w-7xl px-4">
             <SectionTitle title={t("whyTrustUs")} align="left" />
 
-            <div data-trust-grid data-reveal-group className="grid border-y border-border/80 sm:grid-cols-2 lg:grid-cols-4">
+            <div
+              data-trust-grid
+              data-reveal-group
+              className="grid border-y border-border/80 sm:grid-cols-2 lg:grid-cols-4"
+            >
               <TrustCard
                 icon={<ShieldCheck className="h-6 w-6" />}
                 title={t("trustOriginalQuality")}
@@ -808,16 +813,30 @@ function HomePage() {
         </section>
 
         {/* Reviews */}
-        <section data-section className="mx-auto max-w-7xl px-4 py-16 sm:py-20 lg:py-24 [content-visibility:auto] [contain-intrinsic-size:900px]">
-          <SectionTitle title={t("customerReviews")} subtitle={t("customerReviewsSub")} align="left" />
+        <section
+          data-section
+          className="mx-auto max-w-7xl px-4 py-16 sm:py-20 lg:py-24 [content-visibility:auto] [contain-intrinsic-size:900px]"
+        >
+          <SectionTitle
+            title={t("customerReviews")}
+            subtitle={t("customerReviewsSub")}
+            align="left"
+          />
 
-          <div data-review-grid data-reveal-group className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-5">
+          <div
+            data-review-grid
+            data-reveal-group
+            className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-5"
+          >
             {reviews.map((r, i) => (
               <div
                 data-review-card
                 key={i}
-                className={`group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition duration-500 hover:-translate-y-1 hover:shadow-xl sm:p-7 ${i === 0 ? "md:col-span-2 lg:col-span-1 lg:row-span-2 lg:flex lg:flex-col lg:justify-between" : ""
-                  }`}
+                className={`group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition duration-500 hover:-translate-y-1 hover:shadow-xl sm:p-7 ${
+                  i === 0
+                    ? "md:col-span-2 lg:col-span-1 lg:row-span-2 lg:flex lg:flex-col lg:justify-between"
+                    : ""
+                }`}
               >
                 <div>
                   <div className="mb-4 flex">
@@ -826,8 +845,11 @@ function HomePage() {
                     ))}
                   </div>
                   <p
-                    className={`leading-relaxed text-foreground ${i === 0 ? "text-base sm:text-lg lg:text-2xl lg:leading-relaxed" : "text-sm sm:text-base"
-                      }`}
+                    className={`leading-relaxed text-foreground ${
+                      i === 0
+                        ? "text-base sm:text-lg lg:text-2xl lg:leading-relaxed"
+                        : "text-sm sm:text-base"
+                    }`}
                   >
                     {r.text}
                   </p>
@@ -856,7 +878,11 @@ function HomePage() {
           <div className="absolute inset-y-0 right-0 -z-10 w-1/2 bg-gradient-to-l from-black/20 to-transparent" />
           <div className="pointer-events-none absolute -right-20 top-1/2 -z-10 h-80 w-80 -translate-y-1/2 rounded-full border-[40px] border-primary-foreground/5" />
 
-          <div data-whatsapp-content data-reveal-group className="mx-auto max-w-3xl px-4 text-center">
+          <div
+            data-whatsapp-content
+            data-reveal-group
+            className="mx-auto max-w-3xl px-4 text-center"
+          >
             <h2 className="text-3xl font-extrabold tracking-[-0.035em] sm:text-4xl lg:text-5xl">
               {t("needHelpSize")}
             </h2>
@@ -996,8 +1022,9 @@ function SectionTitle({
     <div
       data-section-title
       data-reveal-group
-      className={`mb-8 sm:mb-10 lg:mb-12 ${align === "center" ? "mx-auto max-w-2xl text-center" : "max-w-2xl text-left"
-        }`}
+      className={`mb-8 sm:mb-10 lg:mb-12 ${
+        align === "center" ? "mx-auto max-w-2xl text-center" : "max-w-2xl text-left"
+      }`}
     >
       <h2 className="text-3xl font-extrabold tracking-[-0.04em] text-foreground sm:text-4xl lg:text-5xl">
         {title}

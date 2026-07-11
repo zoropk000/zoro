@@ -43,7 +43,10 @@ function SizeGuidePage() {
             </thead>
             <tbody>
               {SIZE_ROWS.map((r) => (
-                <tr key={r.eu} className="border-t border-border odd:bg-background even:bg-secondary/30">
+                <tr
+                  key={r.eu}
+                  className="border-t border-border odd:bg-background even:bg-secondary/30"
+                >
                   <td className="px-4 py-3">{r.cm} cm</td>
                   <td className="px-4 py-3 font-bold">{r.eu}</td>
                 </tr>

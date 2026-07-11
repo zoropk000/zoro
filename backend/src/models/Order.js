@@ -40,7 +40,16 @@ const orderSchema = new mongoose.Schema(
     },
     orderStatus: {
       type: String,
-      enum: ["pending", "confirmed", "preparing", "processing", "shipped", "out_for_delivery", "delivered", "cancelled"],
+      enum: [
+        "pending",
+        "confirmed",
+        "preparing",
+        "processing",
+        "shipped",
+        "out_for_delivery",
+        "delivered",
+        "cancelled",
+      ],
       default: "pending",
     },
     notes: { type: String, trim: true, default: "" },

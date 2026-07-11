@@ -31,7 +31,14 @@ export type ProductPayload = {
 export type AdminOrder = {
   _id: string;
   orderNumber: string;
-  customer: { name: string; phone: string; email?: string; city: string; address: string; landmark?: string };
+  customer: {
+    name: string;
+    phone: string;
+    email?: string;
+    city: string;
+    address: string;
+    landmark?: string;
+  };
   items: {
     product: string;
     name: string;
@@ -46,6 +53,11 @@ export type AdminOrder = {
   total: number;
   paymentMethod: string;
   paymentStatus: string;
+  paymentProof?: {
+    url: string;
+    publicId: string;
+    uploadedAt: string;
+  };
   orderStatus: string;
   createdAt: string;
   confirmedAt?: string;

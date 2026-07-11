@@ -21,12 +21,8 @@ function NotFoundComponent() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-2xl font-semibold text-foreground">
-          {t("notFoundTitle")}
-        </h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {t("notFoundText")}
-        </p>
+        <h2 className="mt-4 text-2xl font-semibold text-foreground">{t("notFoundTitle")}</h2>
+        <p className="mt-2 text-sm text-muted-foreground">{t("notFoundText")}</p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <Link
             to="/"
@@ -59,9 +55,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
           Something went wrong
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Please try again, or head back home.
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">Please try again, or head back home.</p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
@@ -72,7 +66,10 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
           >
             Try again
           </button>
-          <a href="/" className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-semibold">
+          <a
+            href="/"
+            className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-semibold"
+          >
             Go home
           </a>
         </div>
@@ -95,7 +92,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "ZORO - Shoes with Cash on Delivery" },
       {
         property: "og:description",
-        content: "Comfortable shoes delivered anywhere in Pakistan. Pay cash when your order arrives.",
+        content:
+          "Comfortable shoes delivered anywhere in Pakistan. Pay cash when your order arrives.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

@@ -29,7 +29,8 @@ function DeliveryPage() {
           </InfoCard>
           <InfoCard title={t("deliveryChargesTitle")}>
             <p className="text-sm text-muted-foreground">
-              {t("deliveryChargesText1")} {siteConfig.deliveryFee} {t("deliveryChargesText2")} {siteConfig.freeDeliveryThreshold}.
+              {t("deliveryChargesText1")} {siteConfig.deliveryFee} {t("deliveryChargesText2")}{" "}
+              {siteConfig.freeDeliveryThreshold}.
             </p>
           </InfoCard>
         </div>

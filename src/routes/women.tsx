@@ -9,5 +9,7 @@ export const Route = createFileRoute("/women")({
 
 function WomenPage() {
   const { t } = useLanguage();
-  return <ShopView initialCategory="Women" title={t("womenPageTitle")} subtitle={t("womenPageSub")} />;
+  return (
+    <ShopView initialCategory="Women" title={t("womenPageTitle")} subtitle={t("womenPageSub")} />
+  );
 }

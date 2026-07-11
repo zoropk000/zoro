@@ -74,7 +74,13 @@ function getOrderId(req) {
 
 export const createOrder = asyncHandler(async (req, res) => {
   const { customer, items, paymentMethod, notes } = req.body;
-  if (!customer?.name || !customer?.phone || !customer?.city || !customer?.address || !customer?.email) {
+  if (
+    !customer?.name ||
+    !customer?.phone ||
+    !customer?.city ||
+    !customer?.address ||
+    !customer?.email
+  ) {
     throw new ApiError("Customer name, phone, email, city, and address are required", 400);
   }
   if (!Array.isArray(items) || items.length === 0)
@@ -141,9 +147,9 @@ export const createOrder = asyncHandler(async (req, res) => {
         titleUrdu: "آرڈر موصول ہو گیا",
         description: "We received your order.",
         descriptionUrdu: "ہمیں آپ کا آرڈر موصول ہو گیا ہے۔",
-        timestamp: new Date()
-      }
-    ]
+        timestamp: new Date(),
+      },
+    ],
   });
 
   // Asynchronously send WhatsApp confirmation (skipped on Vercel)
@@ -151,7 +157,8 @@ export const createOrder = asyncHandler(async (req, res) => {
     const whatsappModulePath = "../utils/" + "whatsapp.js";
     import(/* @vite-ignore */ whatsappModulePath)
       .then((module) => {
-        module.sendOrderConfirmationWhatsApp(order)
+        module
+          .sendOrderConfirmationWhatsApp(order)
           .then(async () => {
             const ord = await Order.findById(order._id);
             if (ord) {
@@ -329,11 +336,11 @@ export const confirmOrder = asyncHandler(async (req, res) => {
     minDays,
     maxDays,
     estimatedStartDate,
-    estimatedEndDate
+    estimatedEndDate,
   };
 
   // Push confirmation event
-  const hasConfirmedEvent = order.trackingEvents.some(e => e.status === "confirmed");
+  const hasConfirmedEvent = order.trackingEvents.some((e) => e.status === "confirmed");
   if (!hasConfirmedEvent) {
     order.trackingEvents.push({
       status: "confirmed",
@@ -341,7 +348,7 @@ export const confirmOrder = asyncHandler(async (req, res) => {
       titleUrdu: "آرڈر کی تصدیق ہو گئی",
       description: "Your order has been confirmed.",
       descriptionUrdu: "آپ کے آرڈر کی تصدیق ہو گئی ہے۔",
-      timestamp: now
+      timestamp: now,
     });
   } else {
     order.trackingEvents.push({
@@ -350,7 +357,7 @@ export const confirmOrder = asyncHandler(async (req, res) => {
       titleUrdu: "آرڈر کی تصدیق ہو گئی",
       description: `Your order has been confirmed (Delivery estimated in ${minDays}-${maxDays} working days).`,
       descriptionUrdu: `آپ کے آرڈر کی تصدیق ہو گئی ہے (ڈیلیوری کا وقت ${minDays} تا ${maxDays} کام کے دن)۔`,
-      timestamp: now
+      timestamp: now,
     });
   }
 
@@ -388,8 +395,8 @@ export const confirmOrder = asyncHandler(async (req, res) => {
     order: {
       orderNumber: order.orderNumber,
       status: order.orderStatus,
-      deliveryEstimate: order.deliveryEstimate
-    }
+      deliveryEstimate: order.deliveryEstimate,
+    },
   });
 });
 
@@ -397,7 +404,16 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
   const id = getOrderId(req);
   if (!mongoose.isValidObjectId(id)) throw new ApiError("Invalid order ID", 400);
   const { status } = req.body;
-  const allowed = ["pending", "confirmed", "preparing", "processing", "shipped", "out_for_delivery", "delivered", "cancelled"];
+  const allowed = [
+    "pending",
+    "confirmed",
+    "preparing",
+    "processing",
+    "shipped",
+    "out_for_delivery",
+    "delivered",
+    "cancelled",
+  ];
   if (!allowed.includes(status)) throw new ApiError("Invalid order status", 400);
 
   const order = await Order.findById(id);
@@ -460,7 +476,7 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
       titleUrdu: "منسوخ کر دیا گیا",
       description: "Your order has been cancelled.",
       descriptionUrdu: "آپ کا آرڈر منسوخ کر دیا گیا ہے۔",
-    }
+    },
   };
 
   const details = eventDetails[status] || {
@@ -476,7 +492,7 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
     titleUrdu: details.titleUrdu,
     description: details.description,
     descriptionUrdu: details.descriptionUrdu,
-    timestamp: new Date()
+    timestamp: new Date(),
   });
 
   await order.save();
@@ -509,11 +525,7 @@ export const updatePaymentStatus = asyncHandler(async (req, res) => {
   const { status } = req.body;
   const allowed = ["pending", "paid", "verification-needed", "failed"];
   if (!allowed.includes(status)) throw new ApiError("Invalid payment status", 400);
-  const order = await Order.findByIdAndUpdate(
-    id,
-    { paymentStatus: status },
-    { new: true },
-  );
+  const order = await Order.findByIdAndUpdate(id, { paymentStatus: status }, { new: true });
   if (!order) throw new ApiError("Order not found", 404);
   res.json({ success: true, order });
 });
@@ -523,7 +535,13 @@ export const resendEmail = asyncHandler(async (req, res) => {
   if (!mongoose.isValidObjectId(id)) throw new ApiError("Invalid order ID", 400);
   const { emailType } = req.body;
 
-  const allowedTypes = ["orderReceived", "orderConfirmed", "shipped", "out_for_delivery", "delivered"];
+  const allowedTypes = [
+    "orderReceived",
+    "orderConfirmed",
+    "shipped",
+    "out_for_delivery",
+    "delivered",
+  ];
   if (!allowedTypes.includes(emailType)) {
     throw new ApiError("Invalid email type", 400);
   }
@@ -536,7 +554,7 @@ export const resendEmail = asyncHandler(async (req, res) => {
   order.emailStatus[emailType] = {
     sent: emailRes.success,
     sentAt: emailRes.success ? new Date() : null,
-    error: emailRes.success ? null : emailRes.error
+    error: emailRes.success ? null : emailRes.error,
   };
 
   await order.save();
@@ -548,7 +566,7 @@ export const resendEmail = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     message: `Email '${emailType}' resent successfully`,
-    order
+    order,
   });
 });
 
@@ -578,7 +596,7 @@ export const uploadPaymentProof = asyncHandler(async (req, res) => {
       (error, result) => {
         if (error) reject(new ApiError("Image upload failed", 502, error.message));
         else resolve(result);
-      }
+      },
     );
     Readable.from(file.buffer).pipe(stream);
   });

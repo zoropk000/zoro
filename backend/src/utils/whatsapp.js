@@ -70,7 +70,7 @@ export function initializeWhatsApp() {
 function formatPakistaniNumber(phone) {
   // Removes any non-digit character
   let cleaned = String(phone || "").replace(/\D/g, "");
-  
+
   if (cleaned.startsWith("03") && cleaned.length === 11) {
     return "92" + cleaned.substring(1) + "@c.us";
   } else if (cleaned.startsWith("92") && cleaned.length === 12) {
@@ -78,7 +78,7 @@ function formatPakistaniNumber(phone) {
   } else if (cleaned.startsWith("3") && cleaned.length === 10) {
     return "92" + cleaned + "@c.us";
   }
-  
+
   // Fallback
   return cleaned + "@c.us";
 }
@@ -87,7 +87,7 @@ function getPaymentMethodLabel(method) {
   const map = {
     cod: "Cash on Delivery",
     easypaisa_jazzcash: "Easypaisa / JazzCash",
-    meezan_bank: "Meezan Bank Transfer"
+    meezan_bank: "Meezan Bank Transfer",
   };
   return map[method] || "Cash on Delivery";
 }
@@ -117,7 +117,9 @@ export async function sendOrderConfirmationWhatsApp(order) {
     // Ask WhatsApp servers to resolve the real chat ID
     const numberId = await client.getNumberId(internationalNumber);
     if (!numberId) {
-      console.warn(`⚠️ Number +${internationalNumber} is not registered on WhatsApp. Message not sent.`);
+      console.warn(
+        `⚠️ Number +${internationalNumber} is not registered on WhatsApp. Message not sent.`,
+      );
       return;
     }
 
@@ -128,8 +130,7 @@ export async function sendOrderConfirmationWhatsApp(order) {
       itemsText += `- ${item.name} (Size: ${item.size}) x${item.quantity} = ${formatPKR(item.price * item.quantity)}\n`;
     });
 
-    const message =
-`Assalamualaikum ${order.customer.name} 👋
+    const message = `Assalamualaikum ${order.customer.name} 👋
 
 Thank you for shopping with ZORO! We have successfully received your order.
 
@@ -155,9 +156,14 @@ Thank you!
 ZORO`;
 
     await client.sendMessage(numberId._serialized, message);
-    console.log(`✅ WhatsApp confirmation sent to +${internationalNumber} (ID: ${numberId._serialized}) for order #${order.orderNumber}`);
+    console.log(
+      `✅ WhatsApp confirmation sent to +${internationalNumber} (ID: ${numberId._serialized}) for order #${order.orderNumber}`,
+    );
   } catch (error) {
-    console.error(`❌ Failed to send WhatsApp message for order #${order.orderNumber}:`, error.message);
+    console.error(
+      `❌ Failed to send WhatsApp message for order #${order.orderNumber}:`,
+      error.message,
+    );
     throw error;
   }
 }

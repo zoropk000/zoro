@@ -6,11 +6,17 @@ import { useLanguage } from "@/lib/language-context";
 import { useQuery } from "@tanstack/react-query";
 import { trackOrder } from "@/services/orderService";
 
+type RecentOrder = {
+  orderNumber?: string;
+  phone?: string;
+};
+
 export function OrderSuccessView({ orderNumber }: { orderNumber?: string }) {
   const { t, lang } = useLanguage();
 
-  const recentOrders = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("recentOrders") || "[]") : [];
-  const matched = recentOrders.find((o: any) => o.orderNumber === orderNumber);
+  const recentOrders =
+    typeof window !== "undefined" ? JSON.parse(localStorage.getItem("recentOrders") || "[]") : [];
+  const matched = recentOrders.find((o: RecentOrder) => o.orderNumber === orderNumber);
   const phone = matched?.phone || "";
 
   const { data, isLoading } = useQuery({
@@ -81,7 +87,8 @@ export function OrderSuccessView({ orderNumber }: { orderNumber?: string }) {
                 ) : order.deliveryEstimate && order.deliveryEstimate.minDays ? (
                   <div className="mt-1">
                     <p className="text-base font-bold text-foreground">
-                      {order.deliveryEstimate.minDays}–{order.deliveryEstimate.maxDays} {t("workingDaysLabel")}
+                      {order.deliveryEstimate.minDays}–{order.deliveryEstimate.maxDays}{" "}
+                      {t("workingDaysLabel")}
                     </p>
                     {order.deliveryEstimate.estimatedStartDate && (
                       <p className="text-sm text-muted-foreground">
@@ -89,12 +96,12 @@ export function OrderSuccessView({ orderNumber }: { orderNumber?: string }) {
                         <span className="font-semibold text-foreground">
                           {new Date(order.deliveryEstimate.estimatedStartDate).toLocaleDateString(
                             lang === "ur" ? "ur-PK" : "en-GB",
-                            { day: "numeric", month: "long" }
+                            { day: "numeric", month: "long" },
                           )}{" "}
                           –{" "}
                           {new Date(order.deliveryEstimate.estimatedEndDate).toLocaleDateString(
                             lang === "ur" ? "ur-PK" : "en-GB",
-                            { day: "numeric", month: "long" }
+                            { day: "numeric", month: "long" },
                           )}
                         </span>
                       </p>

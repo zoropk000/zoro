@@ -42,7 +42,15 @@ export type TrackedOrder = {
   total: number;
   paymentMethod: "cod" | "easypaisa_jazzcash" | "meezan_bank";
   paymentStatus: string;
-  orderStatus: "pending" | "confirmed" | "preparing" | "processing" | "shipped" | "out_for_delivery" | "delivered" | "cancelled";
+  orderStatus:
+    | "pending"
+    | "confirmed"
+    | "preparing"
+    | "processing"
+    | "shipped"
+    | "out_for_delivery"
+    | "delivered"
+    | "cancelled";
   deliveryEstimate?: {
     minDays: number;
     maxDays: number;

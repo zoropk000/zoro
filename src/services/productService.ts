@@ -132,9 +132,7 @@ export async function getProducts(filters: ProductFilters = {}) {
 }
 
 export async function getProduct(slug: string) {
-  const data = await apiRequest<ProductListResponse>(
-    `/products${toQuery({ slug, limit: 1 })}`,
-  );
+  const data = await apiRequest<ProductListResponse>(`/products${toQuery({ slug, limit: 1 })}`);
   const product = data.products[0];
   if (!product) throw new Error("Product not found");
   return mapProduct(product);

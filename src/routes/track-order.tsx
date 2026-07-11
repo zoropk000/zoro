@@ -27,6 +27,8 @@ const TIMELINE_STEPS = [
   { status: "delivered", labelKey: "statusDelivered" as const },
 ];
 
+type TrackingEvent = NonNullable<TrackedOrder["trackingEvents"]>[number];
+
 function TrackPage() {
   const { orderNumber: searchOrderNum, phone: searchPhone } = Route.useSearch();
   const [orderNum, setOrderNum] = useState("");
@@ -108,7 +110,9 @@ function TrackPage() {
           className="space-y-4 rounded-2xl border border-border bg-card p-5"
         >
           <div>
-            <label className="mb-1 block text-sm font-semibold text-right-RTL">{t("orderNumberLabel")}</label>
+            <label className="mb-1 block text-sm font-semibold text-right-RTL">
+              {t("orderNumberLabel")}
+            </label>
             <input
               value={orderNum}
               onChange={(e) => setOrderNum(e.target.value)}
@@ -117,7 +121,9 @@ function TrackPage() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-semibold text-right-RTL">{t("mobileNumberLabel")}</label>
+            <label className="mb-1 block text-sm font-semibold text-right-RTL">
+              {t("mobileNumberLabel")}
+            </label>
             <input
               type="tel"
               value={phone}
@@ -146,7 +152,7 @@ function TrackPage() {
             <div className="flex items-center gap-2 text-lg font-bold text-right-RTL">
               <Package className="h-5 w-5 text-primary" />#{order.orderNumber}
             </div>
-            
+
             <div className="text-sm text-muted-foreground text-right-RTL space-y-1">
               <div>
                 {t("total")}:{" "}
@@ -175,47 +181,59 @@ function TrackPage() {
             )}
 
             {/* Delivery Estimate Display */}
-            {order.orderStatus !== "pending" && order.deliveryEstimate && order.deliveryEstimate.minDays && (
-              <div className="rounded-xl bg-secondary/50 p-4 text-sm space-y-1 text-right-RTL border border-border">
-                <div className="font-extrabold text-foreground">
-                  🚚 {t("deliveryEstimateLabel")}:{" "}
-                  <span className="text-primary font-black">
-                    {order.deliveryEstimate.minDays}–{order.deliveryEstimate.maxDays} {t("workingDaysLabel")}
-                  </span>
-                </div>
-                {order.deliveryEstimate.estimatedStartDate && (
-                  <div className="text-xs text-muted-foreground">
-                    {t("deliveryEstimateExpected")}:{" "}
-                    <span className="font-semibold text-foreground">
-                      {new Date(order.deliveryEstimate.estimatedStartDate).toLocaleDateString(
-                        lang === "ur" ? "ur-PK" : "en-GB",
-                        { day: "numeric", month: "long" }
-                      )}{" "}
-                      –{" "}
-                      {new Date(order.deliveryEstimate.estimatedEndDate).toLocaleDateString(
-                        lang === "ur" ? "ur-PK" : "en-GB",
-                        { day: "numeric", month: "long" }
-                      )}
+            {order.orderStatus !== "pending" &&
+              order.deliveryEstimate &&
+              order.deliveryEstimate.minDays && (
+                <div className="rounded-xl bg-secondary/50 p-4 text-sm space-y-1 text-right-RTL border border-border">
+                  <div className="font-extrabold text-foreground">
+                    🚚 {t("deliveryEstimateLabel")}:{" "}
+                    <span className="text-primary font-black">
+                      {order.deliveryEstimate.minDays}–{order.deliveryEstimate.maxDays}{" "}
+                      {t("workingDaysLabel")}
                     </span>
                   </div>
-                )}
-              </div>
-            )}
+                  {order.deliveryEstimate.estimatedStartDate && (
+                    <div className="text-xs text-muted-foreground">
+                      {t("deliveryEstimateExpected")}:{" "}
+                      <span className="font-semibold text-foreground">
+                        {new Date(order.deliveryEstimate.estimatedStartDate).toLocaleDateString(
+                          lang === "ur" ? "ur-PK" : "en-GB",
+                          { day: "numeric", month: "long" },
+                        )}{" "}
+                        –{" "}
+                        {new Date(order.deliveryEstimate.estimatedEndDate).toLocaleDateString(
+                          lang === "ur" ? "ur-PK" : "en-GB",
+                          { day: "numeric", month: "long" },
+                        )}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
 
             {/* Visual Tracking Timeline */}
-            <div className={`relative ${lang === "ur" ? "border-r pr-6 mr-3" : "border-l pl-6 ml-3"} border-border mt-8 space-y-8`}>
+            <div
+              className={`relative ${lang === "ur" ? "border-r pr-6 mr-3" : "border-l pl-6 ml-3"} border-border mt-8 space-y-8`}
+            >
               {TIMELINE_STEPS.map((step) => {
                 const matchedEvent = events.find(
-                  (e: any) => e.status === step.status || (step.status === "preparing" && e.status === "processing")
+                  (e: TrackingEvent) =>
+                    e.status === step.status ||
+                    (step.status === "preparing" && e.status === "processing"),
                 );
-                const isCurrent = latestEvent && (latestEvent.status === step.status || (step.status === "preparing" && latestEvent.status === "processing"));
+                const isCurrent =
+                  latestEvent &&
+                  (latestEvent.status === step.status ||
+                    (step.status === "preparing" && latestEvent.status === "processing"));
                 const isCompleted = !!matchedEvent && !isCurrent;
                 const isFuture = !matchedEvent;
 
                 return (
                   <div key={step.status} className="relative">
                     {/* Indicator Circle */}
-                    <span className={`absolute top-1 ${lang === "ur" ? "-right-[33px]" : "-left-[33px]"} flex h-4.5 w-4.5 items-center justify-center rounded-full bg-background`}>
+                    <span
+                      className={`absolute top-1 ${lang === "ur" ? "-right-[33px]" : "-left-[33px]"} flex h-4.5 w-4.5 items-center justify-center rounded-full bg-background`}
+                    >
                       {isCompleted ? (
                         <span className="flex h-4 w-4 items-center justify-center rounded-full bg-success text-[10px] font-bold text-white shadow-sm">
                           ✓
@@ -232,15 +250,24 @@ function TrackPage() {
 
                     {/* Step Details */}
                     <div>
-                      <h4 className={`text-base font-bold ${isFuture ? "text-muted-foreground font-normal" : "text-foreground"} text-right-RTL`}>
-                        {lang === "ur" ? (
-                          step.status === "pending" ? "آرڈر موصول ہو گیا" :
-                          step.status === "confirmed" ? "آرڈر کی تصدیق ہو گئی" :
-                          step.status === "preparing" ? "جوتے تیار کیے جا رہے ہیں" :
-                          step.status === "shipped" ? "پارسل روانہ کر دیا گیا" :
-                          step.status === "out_for_delivery" ? "پارسل ڈیلیوری کے لیے روانہ ہے" :
-                          step.status === "delivered" ? "پارسل پہنچا دیا گیا" : t(step.labelKey)
-                        ) : t(step.labelKey)}
+                      <h4
+                        className={`text-base font-bold ${isFuture ? "text-muted-foreground font-normal" : "text-foreground"} text-right-RTL`}
+                      >
+                        {lang === "ur"
+                          ? step.status === "pending"
+                            ? "آرڈر موصول ہو گیا"
+                            : step.status === "confirmed"
+                              ? "آرڈر کی تصدیق ہو گئی"
+                              : step.status === "preparing"
+                                ? "جوتے تیار کیے جا رہے ہیں"
+                                : step.status === "shipped"
+                                  ? "پارسل روانہ کر دیا گیا"
+                                  : step.status === "out_for_delivery"
+                                    ? "پارسل ڈیلیوری کے لیے روانہ ہے"
+                                    : step.status === "delivered"
+                                      ? "پارسل پہنچا دیا گیا"
+                                      : t(step.labelKey)
+                          : t(step.labelKey)}
                       </h4>
                       {matchedEvent && (
                         <p className="text-xs text-muted-foreground text-right-RTL mt-0.5 font-medium">

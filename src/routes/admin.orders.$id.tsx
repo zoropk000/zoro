@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AdminCard, AdminLayout, StatusBadge } from "@/components/admin/AdminLayout";
-import { adminApi } from "@/services/adminService";
+import { adminApi, type AdminOrder } from "@/services/adminService";
 import { formatPKR } from "@/lib/currency";
 import { Button } from "@/components/ui/button";
 
@@ -12,8 +12,11 @@ export const Route = createFileRoute("/admin/orders/$id")({
   component: AdminOrderDetails,
 });
 
+type OrderItem = AdminOrder["items"][number];
+type TrackingEvent = NonNullable<AdminOrder["trackingEvents"]>[number];
+
 function addWorkingDays(startDate: Date, days: number) {
-  let date = new Date(startDate);
+  const date = new Date(startDate);
   let remainingDays = days;
   while (remainingDays > 0) {
     date.setDate(date.getDate() + 1);
@@ -125,7 +128,7 @@ function AdminOrderDetails() {
             <AdminCard>
               <div className="mb-4 text-lg font-black">Products</div>
               <div className="space-y-3">
-                {data.items.map((item: any, index: number) => (
+                {data.items.map((item: OrderItem, index: number) => (
                   <div key={index} className="flex gap-3 rounded-xl border border-slate-100 p-3">
                     <img
                       src={item.image || "/logo.png"}
@@ -149,12 +152,13 @@ function AdminOrderDetails() {
               <div className="mb-4 text-lg font-black">Tracking Timeline History</div>
               {data.trackingEvents && data.trackingEvents.length > 0 ? (
                 <div className="relative border-l-2 border-slate-200 ml-4 pl-6 space-y-6">
-                  {data.trackingEvents.map((evt: any, idx: number) => (
+                  {data.trackingEvents.map((evt: TrackingEvent, idx: number) => (
                     <div key={idx} className="relative">
                       <span className="absolute -left-[33px] top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-slate-300 ring-4 ring-white" />
                       <div>
                         <div className="font-bold text-sm text-slate-800 flex items-center gap-2">
-                          {evt.title} <span className="text-xs text-slate-400">({evt.titleUrdu})</span>
+                          {evt.title}{" "}
+                          <span className="text-xs text-slate-400">({evt.titleUrdu})</span>
                         </div>
                         <p className="text-xs text-slate-500 mt-0.5">
                           {new Date(evt.timestamp).toLocaleString()}
@@ -167,7 +171,9 @@ function AdminOrderDetails() {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-slate-400">No tracking timeline history events generated yet.</p>
+                <p className="text-sm text-slate-400">
+                  No tracking timeline history events generated yet.
+                </p>
               )}
             </AdminCard>
           </div>
@@ -190,7 +196,9 @@ function AdminOrderDetails() {
 
               {data.orderStatus === "pending" || showEditEstimate ? (
                 <form onSubmit={handleConfirmOrder} className="space-y-4">
-                  <p className="text-xs text-slate-500">How many days will this order take to deliver?</p>
+                  <p className="text-xs text-slate-500">
+                    How many days will this order take to deliver?
+                  </p>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-xs font-bold text-slate-500">Minimum Days</label>
@@ -234,20 +242,32 @@ function AdminOrderDetails() {
                     className="w-full font-bold cursor-pointer"
                     disabled={!isEstimateValid || savingEstimate}
                   >
-                    {savingEstimate ? "Processing..." : data.orderStatus === "pending" ? "✅ CONFIRM ORDER" : "UPDATE ESTIMATE"}
+                    {savingEstimate
+                      ? "Processing..."
+                      : data.orderStatus === "pending"
+                        ? "✅ CONFIRM ORDER"
+                        : "UPDATE ESTIMATE"}
                   </Button>
                 </form>
               ) : data.deliveryEstimate && data.deliveryEstimate.minDays ? (
                 <div className="space-y-3">
-                  <Info label="Estimate" value={`${data.deliveryEstimate.minDays}–${data.deliveryEstimate.maxDays} Working Days`} />
+                  <Info
+                    label="Estimate"
+                    value={`${data.deliveryEstimate.minDays}–${data.deliveryEstimate.maxDays} Working Days`}
+                  />
                   <Info
                     label="Expected Dates"
                     value={
                       data.deliveryEstimate.estimatedStartDate
-                        ? `${new Date(data.deliveryEstimate.estimatedStartDate).toLocaleDateString("en-GB", {
-                            day: "numeric",
-                            month: "long",
-                          })} – ${new Date(data.deliveryEstimate.estimatedEndDate).toLocaleDateString("en-GB", {
+                        ? `${new Date(data.deliveryEstimate.estimatedStartDate).toLocaleDateString(
+                            "en-GB",
+                            {
+                              day: "numeric",
+                              month: "long",
+                            },
+                          )} – ${new Date(
+                            data.deliveryEstimate.estimatedEndDate,
+                          ).toLocaleDateString("en-GB", {
                             day: "numeric",
                             month: "long",
                           })}`
@@ -255,7 +275,10 @@ function AdminOrderDetails() {
                     }
                   />
                   {data.confirmedAt && (
-                    <Info label="Confirmed At" value={new Date(data.confirmedAt).toLocaleString()} />
+                    <Info
+                      label="Confirmed At"
+                      value={new Date(data.confirmedAt).toLocaleString()}
+                    />
                   )}
                 </div>
               ) : (
@@ -286,7 +309,10 @@ function AdminOrderDetails() {
                 ].map(({ type, label }) => {
                   const email = data.emailStatus?.[type as keyof typeof data.emailStatus];
                   return (
-                    <div key={type} className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                    <div
+                      key={type}
+                      className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3"
+                    >
                       <div className="text-sm">
                         <div className="font-bold flex items-center gap-1.5">
                           {email?.sent ? (
@@ -335,7 +361,9 @@ function AdminOrderDetails() {
               {/* Payment Proof Screenshot */}
               {data.paymentProof?.url ? (
                 <div className="mt-4 border-t border-slate-100 pt-4">
-                  <div className="text-xs font-black uppercase text-slate-500 mb-2">Payment Proof Screenshot</div>
+                  <div className="text-xs font-black uppercase text-slate-500 mb-2">
+                    Payment Proof Screenshot
+                  </div>
                   <div
                     className="cursor-zoom-in overflow-hidden rounded-xl border border-slate-200 bg-slate-50"
                     onClick={() => setProofOpen(true)}
@@ -349,7 +377,9 @@ function AdminOrderDetails() {
                   <p className="mt-1 text-xs text-slate-400">
                     Uploaded: {new Date(data.paymentProof.uploadedAt).toLocaleString()}
                   </p>
-                  <p className="mt-1 text-xs text-slate-500 font-medium">Click image to view full size</p>
+                  <p className="mt-1 text-xs text-slate-500 font-medium">
+                    Click image to view full size
+                  </p>
                   {data.paymentStatus !== "paid" && (
                     <Button
                       className="mt-3 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
@@ -367,9 +397,12 @@ function AdminOrderDetails() {
                     </Button>
                   )}
                 </div>
-              ) : (data.paymentMethod === "easypaisa_jazzcash" || data.paymentMethod === "meezan_bank") ? (
+              ) : data.paymentMethod === "easypaisa_jazzcash" ||
+                data.paymentMethod === "meezan_bank" ? (
                 <div className="mt-4 border-t border-slate-100 pt-4">
-                  <div className="text-xs font-black uppercase text-slate-500 mb-1">Payment Proof</div>
+                  <div className="text-xs font-black uppercase text-slate-500 mb-1">
+                    Payment Proof
+                  </div>
                   <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-700 font-semibold">
                     ⚠️ No screenshot uploaded yet by customer.
                   </div>
@@ -380,14 +413,29 @@ function AdminOrderDetails() {
             <AdminCard>
               <div className="mb-4 text-lg font-black">Order Actions</div>
               <div className="grid grid-cols-2 gap-2">
-                {["confirmed", "preparing", "shipped", "out_for_delivery", "delivered", "cancelled"].map((status) => (
+                {[
+                  "confirmed",
+                  "preparing",
+                  "shipped",
+                  "out_for_delivery",
+                  "delivered",
+                  "cancelled",
+                ].map((status) => (
                   <Button
                     key={status}
                     variant={status === "cancelled" ? "destructive" : "outline"}
                     onClick={() => updateStatus(status)}
-                    disabled={data.orderStatus === "pending" && status !== "confirmed" && status !== "cancelled"}
+                    disabled={
+                      data.orderStatus === "pending" &&
+                      status !== "confirmed" &&
+                      status !== "cancelled"
+                    }
                   >
-                    {status === "preparing" ? "preparing" : status === "out_for_delivery" ? "out for delivery" : status}
+                    {status === "preparing"
+                      ? "preparing"
+                      : status === "out_for_delivery"
+                        ? "out for delivery"
+                        : status}
                   </Button>
                 ))}
               </div>

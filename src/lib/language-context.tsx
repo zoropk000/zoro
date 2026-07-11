@@ -24,7 +24,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     setLangState(l);
     try {
       localStorage.setItem("lang", l);
-    } catch {}
+    } catch {
+      // Storage can be unavailable in private or embedded browser contexts.
+    }
   };
 
   useEffect(() => {
@@ -43,9 +45,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const t = (key: TranslationKey): string => translations[lang][key] as string;
 
   return (
-    <LanguageContext.Provider value={{ lang, setLang, t }}>
-      {children}
-    </LanguageContext.Provider>
+    <LanguageContext.Provider value={{ lang, setLang, t }}>{children}</LanguageContext.Provider>
   );
 }
 

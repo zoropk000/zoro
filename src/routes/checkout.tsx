@@ -17,7 +17,9 @@ export const Route = createFileRoute("/checkout")({
   component: CheckoutPage,
 });
 
-type Errors = Partial<Record<"name" | "phone" | "email" | "city" | "cityOther" | "address", string>>;
+type Errors = Partial<
+  Record<"name" | "phone" | "email" | "city" | "cityOther" | "address", string>
+>;
 
 function CheckoutPage() {
   const { lines, subtotal, clearCart, isLoading } = useCart();
@@ -51,7 +53,7 @@ function CheckoutPage() {
     if (!name.trim()) e.name = t("errName");
     if (!phone.trim()) e.phone = t("errPhone");
     else if (!validatePakistaniPhone(phone)) e.phone = t("errPhoneInvalid");
-    
+
     if (!email.trim()) {
       e.email = t("errEmail");
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
@@ -110,10 +112,10 @@ function CheckoutPage() {
         try {
           const formData = new FormData();
           formData.append("proof", proofFile);
-          await fetch(
-            `${API_BASE_URL}/orders/${createdOrderNumber}/payment-proof`,
-            { method: "POST", body: formData }
-          );
+          await fetch(`${API_BASE_URL}/orders/${createdOrderNumber}/payment-proof`, {
+            method: "POST",
+            body: formData,
+          });
         } catch (err) {
           console.warn("Payment proof upload failed:", err);
         }
@@ -319,7 +321,9 @@ function CheckoutPage() {
                     className="w-full text-sm file:mr-4 file:rounded-full file:border-0 file:bg-primary/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20"
                   />
                   {proofFile && (
-                    <p className="mt-1 text-xs font-semibold text-emerald-600">✅ {proofFile.name}</p>
+                    <p className="mt-1 text-xs font-semibold text-emerald-600">
+                      ✅ {proofFile.name}
+                    </p>
                   )}
                 </div>
               </div>
@@ -350,7 +354,9 @@ function CheckoutPage() {
                     className="w-full text-sm file:mr-4 file:rounded-full file:border-0 file:bg-primary/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20"
                   />
                   {proofFile && (
-                    <p className="mt-1 text-xs font-semibold text-emerald-600">✅ {proofFile.name}</p>
+                    <p className="mt-1 text-xs font-semibold text-emerald-600">
+                      ✅ {proofFile.name}
+                    </p>
                   )}
                 </div>
               </div>
@@ -453,9 +459,7 @@ function CheckoutPage() {
                 </div>
 
                 {/* Title */}
-                <h2 className="text-2xl font-extrabold text-foreground">
-                  🎉 {t("orderPlaced")}
-                </h2>
+                <h2 className="text-2xl font-extrabold text-foreground">🎉 {t("orderPlaced")}</h2>
 
                 {/* Order number badge */}
                 <div className="mx-auto mt-4 inline-block rounded-2xl bg-primary/10 px-5 py-3">

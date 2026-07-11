@@ -14,12 +14,16 @@ async function runTests() {
       throw new Error(`Failed to fetch products: ${productsRes.status}`);
     }
     const productsData = await productsRes.json();
-    const activeProduct = productsData.products.find(p => p.status === "active" && p.sizes && p.sizes.some(s => s.stock > 0));
+    const activeProduct = productsData.products.find(
+      (p) => p.status === "active" && p.sizes && p.sizes.some((s) => s.stock > 0),
+    );
     if (!activeProduct) {
       throw new Error("No active product with stock found to test order placement.");
     }
-    const targetSize = activeProduct.sizes.find(s => s.stock > 0)?.size || "40";
-    console.log(`Using product: ${activeProduct.name} (ID: ${activeProduct._id}, Size: ${targetSize})`);
+    const targetSize = activeProduct.sizes.find((s) => s.stock > 0)?.size || "40";
+    console.log(
+      `Using product: ${activeProduct.name} (ID: ${activeProduct._id}, Size: ${targetSize})`,
+    );
 
     // 2. Place order as customer
     console.log("\n2. Placing customer order...");
@@ -30,22 +34,22 @@ async function runTests() {
         email: "stepstyletest@yopmail.com",
         city: "Karachi",
         address: "Flat A-1, Test Block 10, Gulshan",
-        landmark: "Opposite Test park"
+        landmark: "Opposite Test park",
       },
       items: [
         {
           productId: activeProduct._id,
           size: targetSize,
-          quantity: 1
-        }
+          quantity: 1,
+        },
       ],
-      paymentMethod: "cod"
+      paymentMethod: "cod",
     };
 
     const orderRes = await fetch(`${API_BASE_URL}/orders`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(checkoutPayload)
+      body: JSON.stringify(checkoutPayload),
     });
     if (!orderRes.ok) {
       const errData = await orderRes.json();
@@ -60,7 +64,7 @@ async function runTests() {
     const trackRes = await fetch(`${API_BASE_URL}/orders/track`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderNumber, phone: "03001234567" })
+      body: JSON.stringify({ orderNumber, phone: "03001234567" }),
     });
     if (!trackRes.ok) {
       throw new Error(`Tracking failed: ${trackRes.status}`);
@@ -73,7 +77,9 @@ async function runTests() {
       throw new Error(`Expected orderStatus to be 'pending', got: ${trackData.order.orderStatus}`);
     }
     if (trackData.order.trackingEvents.length !== 1) {
-      throw new Error(`Expected exactly 1 tracking event, got: ${trackData.order.trackingEvents.length}`);
+      throw new Error(
+        `Expected exactly 1 tracking event, got: ${trackData.order.trackingEvents.length}`,
+      );
     }
     console.log("Initial status and trackingEvents are CORRECT.");
 
@@ -82,7 +88,7 @@ async function runTests() {
     const loginRes = await fetch(`${API_BASE_URL}/admin/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: "zoro@gmail.com", password: "zoroadmin123" })
+      body: JSON.stringify({ email: "zoro@gmail.com", password: "zoroadmin123" }),
     });
     if (!loginRes.ok) {
       throw new Error("Admin login failed.");
@@ -96,10 +102,10 @@ async function runTests() {
     // Retrieve order by number to get database _id
     console.log("\nRetrieving order detail to get database ID...");
     const listRes = await fetch(`${API_BASE_URL}/admin/orders?search=${orderNumber}`, {
-      headers: { "Cookie": cookie }
+      headers: { Cookie: cookie },
     });
     const listData = await listRes.json();
-    const dbOrder = listData.orders.find(o => o.orderNumber === orderNumber);
+    const dbOrder = listData.orders.find((o) => o.orderNumber === orderNumber);
     if (!dbOrder) {
       throw new Error(`Could not find order ${orderNumber} in admin order list`);
     }
@@ -112,9 +118,9 @@ async function runTests() {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        "Cookie": cookie
+        Cookie: cookie,
       },
-      body: JSON.stringify({ minDeliveryDays: 3, maxDeliveryDays: 5 })
+      body: JSON.stringify({ minDeliveryDays: 3, maxDeliveryDays: 5 }),
     });
     if (!confirmRes.ok) {
       const err = await confirmRes.json();
@@ -128,17 +134,21 @@ async function runTests() {
     const track2Res = await fetch(`${API_BASE_URL}/orders/track`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderNumber, phone: "03001234567" })
+      body: JSON.stringify({ orderNumber, phone: "03001234567" }),
     });
     const track2Data = await track2Res.json();
     console.log("Confirmed Order Tracking Data:", JSON.stringify(track2Data.order, null, 2));
 
     if (track2Data.order.orderStatus !== "confirmed") {
-      throw new Error(`Expected orderStatus to be 'confirmed', got: ${track2Data.order.orderStatus}`);
+      throw new Error(
+        `Expected orderStatus to be 'confirmed', got: ${track2Data.order.orderStatus}`,
+      );
     }
     const estimate = track2Data.order.deliveryEstimate;
     if (!estimate || estimate.minDays !== 3 || estimate.maxDays !== 5) {
-      throw new Error(`Expected deliveryEstimate to show min: 3, max: 5. Got: ${JSON.stringify(estimate)}`);
+      throw new Error(
+        `Expected deliveryEstimate to show min: 3, max: 5. Got: ${JSON.stringify(estimate)}`,
+      );
     }
     if (!estimate.estimatedStartDate || !estimate.estimatedEndDate) {
       throw new Error("Estimated start/end dates are missing!");
@@ -151,12 +161,15 @@ async function runTests() {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        "Cookie": cookie
+        Cookie: cookie,
       },
-      body: JSON.stringify({ status: "preparing" })
+      body: JSON.stringify({ status: "preparing" }),
     });
     const status1Data = await status1Res.json();
-    console.log("Status Updated to Preparing. Current order status in DB:", status1Data.order.orderStatus);
+    console.log(
+      "Status Updated to Preparing. Current order status in DB:",
+      status1Data.order.orderStatus,
+    );
 
     // 8. Update status to shipped
     console.log("\n8. Updating order status to 'shipped' (triggers email)...");
@@ -164,19 +177,22 @@ async function runTests() {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        "Cookie": cookie
+        Cookie: cookie,
       },
-      body: JSON.stringify({ status: "shipped" })
+      body: JSON.stringify({ status: "shipped" }),
     });
     const status2Data = await status2Res.json();
-    console.log("Status Updated to Shipped. Current order status in DB:", status2Data.order.orderStatus);
+    console.log(
+      "Status Updated to Shipped. Current order status in DB:",
+      status2Data.order.orderStatus,
+    );
 
     // 9. Fetch tracking again to verify timeline length and event status
     console.log("\n9. Tracking order to verify tracking events list...");
     const track3Res = await fetch(`${API_BASE_URL}/orders/track`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderNumber, phone: "03001234567" })
+      body: JSON.stringify({ orderNumber, phone: "03001234567" }),
     });
     const track3Data = await track3Res.json();
     console.log("Final Tracked Events:", JSON.stringify(track3Data.order.trackingEvents, null, 2));

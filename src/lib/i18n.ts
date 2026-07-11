@@ -197,7 +197,8 @@ export const translations = {
     // === ORDER SUCCESS ===
     orderPlaced: "Your Order Has Been Placed!",
     orderPlacedThank: "Thank you. We received your order.",
-    checkEmailNotification: "We have sent your order details to your email. Please check it for your order number.",
+    checkEmailNotification:
+      "We have sent your order details to your email. Please check it for your order number.",
     emailSentTo: "Email sent to",
     orderNumber: "Order Number",
     orderTotal: "Order Total",
@@ -230,7 +231,6 @@ export const translations = {
     statusShipped: "Shipped",
     statusOutForDelivery: "Out for Delivery",
     statusDelivered: "Delivered",
-    checkEmailNotification: "Please check your email for the order details and order number. You can use it to track your order anytime!",
     statusCancelled: "Cancelled",
     paymentLabel: "Payment:",
     recentOrdersCardTitle: "📦 Track Your Order",
@@ -238,7 +238,6 @@ export const translations = {
     recentOrdersTrackBtn: "📦 Track My Order",
     recentOrderNumberLabel: "Order",
     recentStatusLabel: "Current Status",
-    emailSentTo: "We have sent your order details to",
     confirmTimeConfirmingShort: "We will confirm your delivery time shortly.",
     deliveryEstimateLabel: "Estimated Delivery",
     deliveryEstimateExpected: "Expected",
@@ -573,7 +572,8 @@ export const translations = {
     // === ORDER SUCCESS ===
     orderPlaced: "آپ کا آرڈر ہو گیا ہے!",
     orderPlacedThank: "شکریہ۔ ہمیں آپ کا آرڈر مل گیا۔",
-    checkEmailNotification: "ہم نے آپ کے آرڈر کی تفصیلات آپ کے ای میل پر بھیج دی ہیں۔ آرڈر نمبر کے لیے اپنا ای میل چیک کریں۔",
+    checkEmailNotification:
+      "ہم نے آپ کے آرڈر کی تفصیلات آپ کے ای میل پر بھیج دی ہیں۔ آرڈر نمبر کے لیے اپنا ای میل چیک کریں۔",
     emailSentTo: "ای میل بھیجی گئی",
     orderNumber: "آرڈر نمبر",
     orderTotal: "کل رقم",
@@ -606,7 +606,6 @@ export const translations = {
     statusShipped: "پارسل روانہ کر دیا گیا",
     statusOutForDelivery: "پارسل ڈیلیوری کے لیے روانہ ہے",
     statusDelivered: "پارسل پہنچا دیا گیا",
-    checkEmailNotification: "براہ کرم آرڈر کی تفصیلات اور آرڈر نمبر کے لیے اپنا ای میل چیک کریں۔ آپ اسے کسی بھی وقت اپنا آرڈر ٹریک کرنے کے لیے استعمال کر سکتے ہیں!",
     statusCancelled: "منسوخ کر دیا گیا",
     paymentLabel: "ادائیگی:",
     recentOrdersCardTitle: "📦 اپنا آرڈر دیکھیں",
@@ -614,7 +613,6 @@ export const translations = {
     recentOrdersTrackBtn: "📦 میرا آرڈر دیکھیں",
     recentOrderNumberLabel: "آرڈر",
     recentStatusLabel: "موجودہ صورتحال",
-    emailSentTo: "ہم نے آپ کے آرڈر کی تفصیلات اس ای میل پر بھیج دی ہیں",
     confirmTimeConfirmingShort: "ہم جلد ہی آپ کی ڈیلیوری کے وقت کی تصدیق کریں گے۔",
     deliveryEstimateLabel: "ڈیلیوری کا تخمینہ",
     deliveryEstimateExpected: "توقع",
