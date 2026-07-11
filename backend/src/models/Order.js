@@ -68,6 +68,7 @@ const orderSchema = new mongoose.Schema(
         timestamp: { type: Date, default: Date.now },
       },
     ],
+    whatsappConfirmationSent: { type: Boolean, default: false },
     emailStatus: {
       orderReceived: {
         sent: { type: Boolean, default: false },

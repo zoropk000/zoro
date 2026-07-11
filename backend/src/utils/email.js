@@ -130,7 +130,7 @@ export function buildEmailTemplate({ order, title, message, showDeliveryEstimate
               <!-- Header -->
               <tr>
                 <td style="background-color: #0f172a; padding: 28px 24px; text-align: center;">
-                  <div style="font-size: 24px; font-weight: 900; color: #ffffff; letter-spacing: 2px;">STEPSTYLE PAKISTAN</div>
+                  <div style="font-size: 24px; font-weight: 900; color: #ffffff; letter-spacing: 2px;">ZORO</div>
                 </td>
               </tr>
 
@@ -231,7 +231,7 @@ export function buildEmailTemplate({ order, title, message, showDeliveryEstimate
                 <td style="background-color: #f8fafc; padding: 24px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0;">
                   <div style="font-weight: 700; color: #64748b; margin-bottom: 4px;">Secure Ordering &bull; Cash on Delivery &bull; Delivery Across Pakistan</div>
                   <div>If you have any questions, message us on WhatsApp at +92 317 0363100.</div>
-                  <div style="margin-top: 12px;">&copy; ${new Date().getFullYear()} StepStyle Pakistan. All rights reserved.</div>
+                  <div style="margin-top: 12px;">&copy; ${new Date().getFullYear()} ZORO. All rights reserved.</div>
                 </td>
               </tr>
             </table>
@@ -254,7 +254,7 @@ export async function sendEmail({ to, subject, html }) {
     return { skipped: true };
   }
 
-  const fromName = process.env.EMAIL_FROM_NAME || "StepStyle Pakistan";
+  const fromName = process.env.EMAIL_FROM_NAME || "ZORO";
   const fromEmail = process.env.GMAIL_USER;
 
   const info = await transporter.sendMail({
@@ -284,37 +284,37 @@ export async function sendOrderStatusEmail(order, statusType) {
 
   switch (statusType) {
     case "orderReceived":
-      subject = `✅ Order Received — #${order.orderNumber} | StepStyle Pakistan`;
+      subject = `✅ Order Received — #${order.orderNumber} | ZORO`;
       title = "We received your order";
-      message = `Thank you for shopping with StepStyle Pakistan! We have successfully received your order <strong>#${order.orderNumber}</strong>. We are now processing it and will confirm the delivery details shortly. You can use this order number to track your order at any time.`;
+      message = `Thank you for shopping with ZORO! We have successfully received your order <strong>#${order.orderNumber}</strong>. We are now processing it and will confirm the delivery details shortly. You can use this order number to track your order at any time.`;
       showDeliveryEstimate = false;
       break;
 
     case "orderConfirmed":
-      subject = `🎉 Order Confirmed — #${order.orderNumber} | StepStyle Pakistan`;
+      subject = `🎉 Order Confirmed — #${order.orderNumber} | ZORO`;
       title = "Your order is confirmed";
       message = "Great news! Your order has been officially confirmed by our team. Please see your estimated delivery timeframe below. We'll start preparing your shoes right away!";
       showDeliveryEstimate = true;
       break;
 
     case "shipped":
-      subject = `🚚 Order Shipped — #${order.orderNumber} | StepStyle Pakistan`;
+      subject = `🚚 Order Shipped — #${order.orderNumber} | ZORO`;
       title = "Your order has been shipped";
       message = "Exciting news! Your shoes have been packed and handed over to our courier partner. They are on their way to you now.";
       showDeliveryEstimate = true;
       break;
 
     case "out_for_delivery":
-      subject = `🏠 Your Shoes Are Coming Today — #${order.orderNumber} | StepStyle Pakistan`;
+      subject = `🏠 Your Shoes Are Coming Today — #${order.orderNumber} | ZORO`;
       title = "Your shoes are coming today";
       message = "Get ready! The delivery rider has picked up your parcel and is out for delivery today. Please keep your phone active so the rider can contact you.";
       showDeliveryEstimate = true;
       break;
 
     case "delivered":
-      subject = `✅ Order Delivered — #${order.orderNumber} | StepStyle Pakistan`;
+      subject = `✅ Order Delivered — #${order.orderNumber} | ZORO`;
       title = "Your order has been delivered";
-      message = "Enjoy your new shoes! Our courier partner confirmed that your order has been successfully delivered. Thank you for shopping with StepStyle Pakistan.";
+      message = "Enjoy your new shoes! Our courier partner confirmed that your order has been successfully delivered. Thank you for shopping with ZORO.";
       showDeliveryEstimate = false;
       break;
 

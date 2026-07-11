@@ -34,7 +34,7 @@ export function Header() {
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:py-4">
           <Link to="/" className="flex items-center gap-2">
             <span className="text-lg font-extrabold tracking-tight text-primary sm:text-xl">
-              <img src="/logo1.png" alt="StepStyle Pakistan" className="h-16 w-auto object-contain" />
+              <img src="/logo1.png" alt="ZORO" className="h-16 w-auto object-contain" />
             </span>
           </Link>
 

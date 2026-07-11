@@ -68,7 +68,7 @@ app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use(cookieParser());
 
 app.get("/api/health", (req, res) => {
-  res.json({ success: true, message: "StepStyle Pakistan API is running" });
+  res.json({ success: true, message: "ZORO API is running" });
 });
 
 app.use("/api/products", productRoutes);

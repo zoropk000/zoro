@@ -7,6 +7,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { makeOrderNumber } from "../utils/orderNumber.js";
 import { sendOrderStatusEmail } from "../utils/email.js";
+import { sendOrderConfirmationWhatsApp } from "../utils/whatsapp.js";
 
 function normalizePhone(phone) {
   return String(phone || "")
@@ -145,6 +146,21 @@ export const createOrder = asyncHandler(async (req, res) => {
       }
     ]
   });
+
+  // Asynchronously send WhatsApp confirmation
+  if (!order.whatsappConfirmationSent) {
+    sendOrderConfirmationWhatsApp(order)
+      .then(async () => {
+        const ord = await Order.findById(order._id);
+        if (ord) {
+          ord.whatsappConfirmationSent = true;
+          await ord.save();
+        }
+      })
+      .catch((err) => {
+        console.error("WhatsApp confirmation background failure:", err);
+      });
+  }
 
   // Asynchronously send "Order Received" email
   sendOrderStatusEmail(order, "orderReceived")
