@@ -148,7 +148,8 @@ export const createOrder = asyncHandler(async (req, res) => {
 
   // Asynchronously send WhatsApp confirmation (skipped on Vercel)
   if (!order.whatsappConfirmationSent && !process.env.VERCEL) {
-    import(/* @vite-ignore */ "../utils/whatsapp.js")
+    const whatsappModulePath = "../utils/" + "whatsapp.js";
+    import(/* @vite-ignore */ whatsappModulePath)
       .then((module) => {
         module.sendOrderConfirmationWhatsApp(order)
           .then(async () => {
