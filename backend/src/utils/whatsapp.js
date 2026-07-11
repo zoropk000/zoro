@@ -1,6 +1,6 @@
 import pkg from "whatsapp-web.js";
 const { Client, LocalAuth } = pkg;
-import qrcode from "qrcode-terminal";
+import QRCode from "qrcode";
 import fs from "fs";
 
 function getBrowserExecutablePath() {
@@ -39,7 +39,13 @@ export function initializeWhatsApp() {
 
   client.on("qr", (qr) => {
     console.log("📱 WhatsApp QR Code received. Scan with your WhatsApp app to link.");
-    qrcode.generate(qr, { small: true });
+    QRCode.toString(qr, { type: "terminal", small: true }, (err, url) => {
+      if (err) {
+        console.error("Error generating QR code:", err);
+      } else {
+        console.log(url);
+      }
+    });
   });
 
   client.on("ready", () => {
