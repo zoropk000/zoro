@@ -28,7 +28,7 @@ export const translations = {
     navCart: "Cart",
     // === WHATSAPP BUTTON ===
     needHelp: "Need Help?",
-    waDefaultMsg: "Assalamualaikum, I need help with my order.",
+    waDefaultMsg: "Hi, I need help with my order.",
     // === HOMEPAGE ===
     heroTitle: "Find Your Perfect Pair",
     heroSubtitle: "Comfortable shoes delivered anywhere in Pakistan.",
@@ -67,7 +67,7 @@ export const translations = {
     needHelpSize: "Need Help Choosing Your Size?",
     needHelpSizeText: "Message us on WhatsApp. We will help you choose the right shoes.",
     chatOnWhatsApp: "Chat on WhatsApp",
-    waHelpMsg: "Assalamualaikum, I need help choosing my shoe size.",
+    waHelpMsg: "Hi, I need help choosing my shoe size.",
     // === SHOP VIEW ===
     allShoesTitle: "All Shoes",
     allShoesSub: "Find the right pair for you",
@@ -109,7 +109,7 @@ export const translations = {
     buyNow: "Buy Now",
     addToCart: "Add to Cart",
     orderOnWhatsApp: "Order on WhatsApp",
-    waProductMsg: "Assalamualaikum, I need help with this shoe:",
+    waProductMsg: "Hi, I need help with this shoe:",
     codBenefit: "Cash on Delivery - Pay when your order arrives",
     deliveryBenefit: "Delivery Across Pakistan",
     exchangeBenefit: "Easy Size Exchange",
@@ -213,7 +213,7 @@ export const translations = {
     nextStep4Paid: "Thank you for your payment.",
     trackMyOrder: "Track My Order",
     whatsappHelp: "WhatsApp",
-    waOrderMsg: "Assalamualaikum, I need help with my order",
+    waOrderMsg: "Hi, I need help with my order",
     // === TRACK ORDER ===
     trackYourOrder: "Track Your Order",
     trackSubtitle: "Enter your order number and mobile number to see status.",
