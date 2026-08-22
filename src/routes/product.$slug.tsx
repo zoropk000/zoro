@@ -14,7 +14,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   ChevronLeft,
   ChevronRight,
-  MessageCircle,
   RefreshCw,
   Star,
   Truck,
@@ -106,7 +105,6 @@ function ProductPage() {
       ? product.shortDescriptionUrdu
       : product.shortDescription;
 
-  const waMsg = encodeURIComponent(`${t("waProductMsg")} ${product.name}`);
 
   const accordions = [
     {
@@ -289,15 +287,6 @@ function ProductPage() {
                 {t("addToCart")}
               </button>
             </div>
-
-            <a
-              href={`https://wa.me/${siteConfig.whatsapp}?text=${waMsg}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-3 hidden items-center justify-center gap-2 rounded-xl bg-whatsapp py-3 text-sm font-bold text-whatsapp-foreground md:flex"
-            >
-              <MessageCircle className="h-5 w-5" /> {t("orderOnWhatsApp")}
-            </a>
 
             <div className="mt-6 grid gap-2 rounded-2xl border border-border bg-secondary/40 p-4 text-sm">
               <Line icon={<Wallet className="h-4 w-4 text-success" />} text={t("codBenefit")} />

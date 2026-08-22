@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Mail, MessageCircle, Phone, Instagram, Facebook } from "lucide-react";
+import { Mail, Phone, Instagram, Facebook } from "lucide-react";
 import { siteConfig } from "@/config/siteConfig";
 import { useLanguage } from "@/lib/language-context";
 
@@ -110,12 +110,6 @@ export function Footer() {
             <li className="flex items-start gap-3">
               <Phone className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
               <span>{siteConfig.phone}</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <MessageCircle className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
-              <span>
-                {t("footerWhatsApp")} {siteConfig.phone}
-              </span>
             </li>
             <li className="flex items-start gap-3">
               <Mail className="mt-0.5 h-4 w-4 shrink-0 text-primary" />

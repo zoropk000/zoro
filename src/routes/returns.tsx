@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Layout } from "@/components/Layout";
 import { siteConfig } from "@/config/siteConfig";
 import { useLanguage } from "@/lib/language-context";
-import { MessageCircle } from "lucide-react";
+import { Mail } from "lucide-react";
 
 export const Route = createFileRoute("/returns")({
   head: () => ({ meta: [{ title: "Returns & Exchange - ZORO" }] }),
@@ -11,7 +11,6 @@ export const Route = createFileRoute("/returns")({
 
 function ReturnsPage() {
   const { t } = useLanguage();
-  const waMsg = encodeURIComponent(t("waExchangeMsg"));
   return (
     <Layout>
       <div className="mx-auto max-w-2xl px-4 py-10">
@@ -24,12 +23,10 @@ function ReturnsPage() {
           <li>{t("returnsStep4")}</li>
         </ol>
         <a
-          href={`https://wa.me/${siteConfig.whatsapp}?text=${waMsg}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 rounded-xl bg-whatsapp px-6 py-4 text-base font-bold text-whatsapp-foreground hover:opacity-90"
+          href={`mailto:${siteConfig.email}`}
+          className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-4 text-base font-bold text-primary-foreground hover:opacity-90"
         >
-          <MessageCircle className="h-5 w-5" />
+          <Mail className="h-5 w-5" />
           {t("requestExchange")}
         </a>
       </div>

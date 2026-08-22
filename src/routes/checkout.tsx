@@ -300,10 +300,10 @@ function CheckoutPage() {
               <div className="rounded-xl bg-secondary p-4 text-sm">
                 <div className="mb-1 font-bold text-foreground">{t("easypaisaDetails")}</div>
                 <div className="flex items-center justify-between rounded-lg border border-border bg-background p-2">
-                  <span className="font-mono text-base font-semibold">03170363100</span>
+                  <span className="font-mono text-base font-semibold">03247964287</span>
                   <button
                     type="button"
-                    onClick={() => navigator.clipboard.writeText("03170363100")}
+                    onClick={() => navigator.clipboard.writeText("03247964287")}
                     className="text-xs font-bold text-primary"
                   >
                     {t("copyBtn")}

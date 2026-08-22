@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Layout } from "@/components/Layout";
 import { useLanguage } from "@/lib/language-context";
+import { siteConfig } from "@/config/siteConfig";
 
 export const Route = createFileRoute("/size-guide")({
   head: () => ({ meta: [{ title: "Size Guide - ZORO" }] }),
@@ -57,9 +58,7 @@ function SizeGuidePage() {
         <p className="mt-6 text-sm text-muted-foreground">
           {t("sizeGuideConfused")}{" "}
           <a
-            href="https://wa.me/923170363100"
-            target="_blank"
-            rel="noopener noreferrer"
+            href={`mailto:${siteConfig.email}`}
             className="font-semibold text-primary underline"
           >
             {t("messageUsWhatsApp")}

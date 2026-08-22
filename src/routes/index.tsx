@@ -8,6 +8,7 @@ import { reviews } from "@/data/reviews";
 import { siteConfig } from "@/config/siteConfig";
 import { useLanguage } from "@/lib/language-context";
 import {
+  Mail,
   MessageCircle,
   ShieldCheck,
   Truck,
@@ -889,15 +890,24 @@ function HomePage() {
             <p className="mx-auto mt-4 max-w-2xl text-primary-foreground/80 sm:text-lg">
               {t("needHelpSizeText")}
             </p>
-            <a
-              href={`https://wa.me/${siteConfig.whatsapp}?text=${encodeURIComponent(t("waHelpMsg"))}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-7 inline-flex items-center gap-2 rounded-xl bg-whatsapp px-7 py-4 text-base font-bold text-whatsapp-foreground shadow-lg transition duration-300 hover:-translate-y-1 hover:opacity-90 hover:shadow-xl"
-            >
-              <MessageCircle className="h-5 w-5" />
-              {t("chatOnWhatsApp")}
-            </a>
+            <div className="mt-7 flex flex-wrap items-center justify-center gap-4">
+              <a
+                href={`https://wa.me/${siteConfig.whatsapp}?text=${encodeURIComponent(t("waHelpMsg"))}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-xl bg-whatsapp px-7 py-4 text-base font-bold text-whatsapp-foreground shadow-lg transition duration-300 hover:-translate-y-1 hover:opacity-90 hover:shadow-xl"
+              >
+                <MessageCircle className="h-5 w-5" />
+                {t("chatOnWhatsApp")}
+              </a>
+              <a
+                href={`mailto:${siteConfig.email}`}
+                className="inline-flex items-center gap-2 rounded-xl bg-background px-7 py-4 text-base font-bold text-foreground shadow-lg transition duration-300 hover:-translate-y-1 hover:opacity-90 hover:shadow-xl"
+              >
+                <Mail className="h-5 w-5" />
+                {t("email")}
+              </a>
+            </div>
           </div>
         </section>
       </div>

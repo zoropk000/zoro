@@ -245,7 +245,7 @@ export function buildEmailTemplate({ order, title, message, showDeliveryEstimate
               <tr>
                 <td style="background-color: #f8fafc; padding: 24px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0;">
                   <div style="font-weight: 700; color: #64748b; margin-bottom: 4px;">Secure Ordering &bull; Cash on Delivery &bull; Delivery Across Pakistan</div>
-                  <div>If you have any questions, message us on WhatsApp at +92 317 0363100.</div>
+                  <div>If you have any questions, email us at zoropk000@gmail.com.</div>
                   <div style="margin-top: 12px;">&copy; ${new Date().getFullYear()} ZORO. All rights reserved.</div>
                 </td>
               </tr>
