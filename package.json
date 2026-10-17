@@ -78,7 +78,8 @@
     "zod": "^3.24.2"
   },
   "overrides": {
-    "@tanstack/start-server-core": "1.169.39"
+    "@tanstack/start-server-core": "1.169.39",
+    "@tanstack/start-plugin-core": "1.169.3"
   },
   "devDependencies": {
     "@emnapi/core": "^1.11.2",
