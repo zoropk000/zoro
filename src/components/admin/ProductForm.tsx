@@ -10,6 +10,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { AdminCard } from "./AdminLayout";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/services/api";
+import { defaultCategories, type Storefront } from "@/services/storefrontService";
 
 const DEFAULT_SIZES = ["39", "40", "41", "42", "43", "44"].map((size) => ({ size, stock: 0 }));
 
@@ -21,6 +24,11 @@ function initialState(product?: Product): FormState {
     nameUrdu: product?.nameUrdu || "",
     slug: product?.slug || "",
     gender: product?.gender || "men",
+    category: product?.category || "shoes",
+    subcategory: product?.subcategory || "",
+    brand: product?.brand || "",
+    fragranceType: product?.fragranceType || "",
+    bottleSize: product?.bottleSize || "",
     sku: product?.sku || "",
     price: product?.price || 0,
     oldPrice: product?.oldPrice || undefined,
@@ -45,6 +53,13 @@ export function ProductForm({ product }: { product?: Product }) {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const navigate = useNavigate();
+  const { data: storefront } = useQuery({
+    queryKey: ["admin-storefront"],
+    queryFn: () => apiRequest<Storefront>("/admin/storefront"),
+    retry: false,
+  });
+  const categories = storefront?.categories || defaultCategories;
+  const productType = categories.find((c) => c.slug === form.category)?.type || "general";
 
   const errors = useMemo(() => validate(form), [form]);
 
@@ -85,7 +100,7 @@ export function ProductForm({ product }: { product?: Product }) {
     }));
   };
 
-  const save = async (status: "draft" | "active") => {
+  const save = async (status: ProductPayload["status"]) => {
     const payload = {
       ...form,
       status,
@@ -144,11 +159,12 @@ export function ProductForm({ product }: { product?: Product }) {
             <Field label="Gender" error={errors.gender}>
               <select
                 value={form.gender}
-                onChange={(e) => setField("gender", e.target.value as "men" | "women")}
+                onChange={(e) => setField("gender", e.target.value as ProductPayload["gender"])}
                 className="h-10 w-full rounded-md border border-input bg-background px-3"
               >
                 <option value="men">Men</option>
                 <option value="women">Women</option>
+                <option value="unisex">Unisex</option>
               </select>
             </Field>
             <Field label="SKU">
@@ -158,6 +174,97 @@ export function ProductForm({ product }: { product?: Product }) {
                 placeholder="Optional"
               />
             </Field>
+          </div>
+        </AdminCard>
+
+        <AdminCard>
+          <SectionTitle
+            title="Department and product attributes"
+            subtitle="Categories and brands are managed in Storefront settings. Stock is pooled by size or volume; colours are recorded on each order."
+          />
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field label="Department">
+              <select
+                className="h-11 w-full border border-input bg-background px-3 text-sm"
+                value={form.category}
+                onChange={(e) => {
+                  const next = categories.find((c) => c.slug === e.target.value)?.type;
+                  setForm((previous) => ({
+                    ...previous,
+                    category: e.target.value,
+                    subcategory: "",
+                    fragranceType: "",
+                    bottleSize: "",
+                    ...(!product
+                      ? {
+                          sizes: (next === "clothing"
+                            ? ["S", "M", "L", "XL"]
+                            : next === "perfumes"
+                              ? ["50ml", "100ml"]
+                              : next === "shoes"
+                                ? ["39", "40", "41", "42", "43", "44"]
+                                : ["One size"]
+                          ).map((size) => ({ size, stock: 0 })),
+                        }
+                      : {}),
+                  }));
+                }}
+              >
+                {categories
+                  .filter((c) => !c.parent)
+                  .map((c) => (
+                    <option key={c.slug} value={c.slug}>
+                      {c.name}
+                    </option>
+                  ))}
+              </select>
+            </Field>
+            <Field label="Subcategory">
+              <select
+                className="h-11 w-full border border-input bg-background px-3 text-sm"
+                value={form.subcategory}
+                onChange={(e) => setField("subcategory", e.target.value)}
+              >
+                <option value="">None</option>
+                {categories
+                  .filter((c) => c.parent === form.category)
+                  .map((c) => (
+                    <option key={c.slug} value={c.slug}>
+                      {c.name}
+                    </option>
+                  ))}
+              </select>
+            </Field>
+            <Field label="Brand">
+              <select
+                className="h-11 w-full border border-input bg-background px-3 text-sm"
+                value={form.brand}
+                onChange={(e) => setField("brand", e.target.value)}
+              >
+                <option value="">ZORO / unbranded</option>
+                {[
+                  ...new Set([...(storefront?.brands || []), ...(form.brand ? [form.brand] : [])]),
+                ].map((brand) => (
+                  <option key={brand}>{brand}</option>
+                ))}
+              </select>
+            </Field>
+            {productType === "perfumes" && (
+              <Field label="Fragrance type">
+                <Input
+                  list="fragrance-types"
+                  value={form.fragranceType}
+                  onChange={(e) => setField("fragranceType", e.target.value)}
+                />
+                <datalist id="fragrance-types">
+                  {["Eau de Parfum", "Eau de Toilette", "Parfum", "Body Mist", "Attar"].map(
+                    (type) => (
+                      <option key={type}>{type}</option>
+                    ),
+                  )}
+                </datalist>
+              </Field>
+            )}
           </div>
         </AdminCard>
 
@@ -286,10 +393,27 @@ export function ProductForm({ product }: { product?: Product }) {
         </AdminCard>
 
         <AdminCard>
-          <SectionTitle title="Sizes and Stock" />
+          <SectionTitle
+            title={
+              productType === "perfumes"
+                ? "Bottle sizes and stock"
+                : productType === "accessories"
+                  ? "Options and stock"
+                  : "Sizes and stock"
+            }
+            subtitle={
+              productType === "perfumes"
+                ? "Use volumes such as 30ml, 50ml or 100ml."
+                : productType === "clothing"
+                  ? "Use sizes such as XS, S, M, L or XL."
+                  : productType === "accessories"
+                    ? "Use One size, or meaningful option names."
+                    : "Each size has its own stock quantity."
+            }
+          />
           <div className="space-y-3">
             {form.sizes.map((row, index) => (
-              <div key={`${row.size}-${index}`} className="grid grid-cols-[1fr_1fr_auto] gap-3">
+              <div key={index} className="grid grid-cols-[1fr_1fr_auto] gap-3">
                 <Input
                   value={row.size}
                   onChange={(e) => updateSize(index, "size", e.target.value)}
@@ -378,7 +502,7 @@ export function ProductForm({ product }: { product?: Product }) {
         <div className="grid gap-3">
           <Button
             disabled={saving || uploading}
-            onClick={() => save("active")}
+            onClick={() => save(form.status)}
             className="h-12 text-base font-black"
           >
             {saving ? (
@@ -386,7 +510,7 @@ export function ProductForm({ product }: { product?: Product }) {
             ) : (
               <ImagePlus className="mr-2 h-4 w-4" />
             )}
-            Publish Product
+            Save product
           </Button>
           <Button
             disabled={saving || uploading}
@@ -405,12 +529,20 @@ export function ProductForm({ product }: { product?: Product }) {
 function validate(form: ProductPayload) {
   const errors: Record<string, string> = {};
   if (!form.name.trim()) errors.name = "Product name is required.";
-  if (!["men", "women"].includes(form.gender)) errors.gender = "Please select Men or Women.";
+  if (!["men", "women", "unisex"].includes(form.gender))
+    errors.gender = "Please select an audience.";
   if (!Number(form.price) || Number(form.price) <= 0)
     errors.price = "Price must be greater than zero.";
   if (form.status === "active" && form.images.length === 0)
     errors.images = "Upload at least one product image.";
-  if (!form.sizes.length || form.sizes.some((row) => !row.size || Number(row.stock) < 0)) {
+  if (
+    !form.sizes.length ||
+    form.sizes.some(
+      (row) =>
+        !row.size.trim() || !Number.isSafeInteger(Number(row.stock)) || Number(row.stock) < 0,
+    ) ||
+    new Set(form.sizes.map((row) => row.size.trim())).size !== form.sizes.length
+  ) {
     errors.sizes = "Sizes are required and stock cannot be negative.";
   }
   return errors;
@@ -427,11 +559,11 @@ function SectionTitle({ title, subtitle }: { title: string; subtitle?: string })
 
 function Field({ label, error, children }: { label: string; error?: string; children: ReactNode }) {
   return (
-    <div>
-      <Label className="mb-2 block font-bold text-slate-700">{label}</Label>
+    <label className="block">
+      <span className="mb-2 block font-bold text-slate-700">{label}</span>
       {children}
       {error && <p className="mt-1 text-sm font-semibold text-destructive">{error}</p>}
-    </div>
+    </label>
   );
 }
 
@@ -447,7 +579,7 @@ function Toggle({
   return (
     <div className="flex items-center justify-between rounded-xl border border-slate-200 p-3">
       <span className="font-bold text-slate-700">{label}</span>
-      <Switch checked={value} onCheckedChange={onChange} />
+      <Switch aria-label={label} checked={value} onCheckedChange={onChange} />
     </div>
   );
 }

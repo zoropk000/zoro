@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Eye, Search } from "lucide-react";
 import { AdminCard, AdminLayout, StatusBadge } from "@/components/admin/AdminLayout";
 import { adminApi } from "@/services/adminService";
@@ -23,7 +23,12 @@ function AdminOrdersIndex() {
   const [status, setStatus] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
   const [paymentStatus, setPaymentStatus] = useState("");
+  const [page, setPage] = useState(1);
+  useEffect(() => {
+    setPage(1);
+  }, [search, status, paymentMethod, paymentStatus]);
   const params = new URLSearchParams();
+  params.set("page", String(page));
   if (search) params.set("search", search);
   if (status) params.set("status", status);
   if (paymentMethod) params.set("paymentMethod", paymentMethod);
@@ -50,7 +55,16 @@ function AdminOrdersIndex() {
           <Filter
             value={status}
             onChange={setStatus}
-            options={["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"]}
+            options={[
+              "pending",
+              "confirmed",
+              "preparing",
+              "processing",
+              "shipped",
+              "out_for_delivery",
+              "delivered",
+              "cancelled",
+            ]}
             label="Status"
           />
           <Filter
@@ -92,6 +106,14 @@ function AdminOrdersIndex() {
                   <td className="font-bold">{formatPKR(order.total)}</td>
                   <td>
                     <StatusBadge value={order.paymentMethod} />
+                    <div className="mt-1">
+                      <StatusBadge value={order.paymentStatus} />
+                    </div>
+                    {order.paymentProof?.url && (
+                      <span className="mt-1 block text-xs text-emerald-700">
+                        Screenshot received
+                      </span>
+                    )}
                   </td>
                   <td>
                     <StatusBadge value={order.orderStatus} />
@@ -99,7 +121,11 @@ function AdminOrdersIndex() {
                   <td>{new Date(order.createdAt).toLocaleDateString()}</td>
                   <td className="pr-4 text-right">
                     <Button asChild variant="ghost" size="icon">
-                      <Link to="/admin/orders/$id" params={{ id: order._id }}>
+                      <Link
+                        to="/admin/orders/$id"
+                        params={{ id: order._id }}
+                        aria-label={`View order ${order.orderNumber}`}
+                      >
                         <Eye className="h-4 w-4" />
                       </Link>
                     </Button>
@@ -117,6 +143,27 @@ function AdminOrdersIndex() {
           </table>
         </div>
       </div>
+      {orders.isError && (
+        <div className="collection-empty mt-5">
+          <p>Could not load orders.</p>
+          <button className="text-link" onClick={() => orders.refetch()}>
+            Try again
+          </button>
+        </div>
+      )}
+      {orders.data && (
+        <div className="pagination">
+          <button disabled={page <= 1} onClick={() => setPage(page - 1)}>
+            Previous
+          </button>
+          <span>
+            {orders.data.pagination.total} orders · Page {page} of {orders.data.pagination.pages}
+          </span>
+          <button disabled={page >= orders.data.pagination.pages} onClick={() => setPage(page + 1)}>
+            Next
+          </button>
+        </div>
+      )}
     </AdminLayout>
   );
 }
@@ -134,6 +181,7 @@ function Filter({
 }) {
   return (
     <select
+      aria-label={label}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       className="h-10 rounded-md border border-input bg-background px-3"

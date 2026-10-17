@@ -1,6 +1,6 @@
 export const siteConfig = {
   brandName: "ZORO",
-  tagline: "Comfortable shoes, delivered anywhere in Pakistan.",
+  tagline: "Everyday, elevated.",
   phone: "+92 329 3927054",
   whatsapp: "923293927054",
   email: "zoropk000@gmail.com",

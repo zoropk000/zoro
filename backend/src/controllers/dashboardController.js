@@ -1,5 +1,6 @@
 import { Order } from "../models/Order.js";
 import { Product } from "../models/Product.js";
+import { Customer } from "../models/Customer.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 function startDateForRange(range = "monthly") {
@@ -155,5 +156,29 @@ export const customers = asyncHandler(async (req, res) => {
     },
     { $sort: { lastOrder: -1 } },
   ]);
-  res.json({ success: true, customers: data });
+  const accounts = await Customer.find({}, { name: 1, email: 1, createdAt: 1 }).lean();
+  const accountStats = await Order.aggregate([
+    { $match: { customerAccount: { $exists: true } } },
+    {
+      $group: {
+        _id: "$customerAccount",
+        totalOrders: { $sum: 1 },
+        totalSpent: { $sum: "$total" },
+        lastOrder: { $max: "$createdAt" },
+        phone: { $last: "$customer.phone" },
+        city: { $last: "$customer.city" },
+      },
+    },
+  ]);
+  res.json({
+    success: true,
+    customers: data,
+    accounts: accounts.map((account) => ({
+      ...account,
+      ...(accountStats.find((row) => String(row._id) === String(account._id)) || {
+        totalOrders: 0,
+        totalSpent: 0,
+      }),
+    })),
+  });
 });

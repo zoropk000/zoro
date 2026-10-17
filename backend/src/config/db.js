@@ -13,6 +13,7 @@ export async function connectDB() {
   mongoose.set("strictQuery", true);
   await mongoose.connect(uri, {
     dbName: process.env.MONGODB_DB || "stepstylepakistan",
+    serverSelectionTimeoutMS: 10000,
   });
 
   console.log(`MongoDB connected: ${mongoose.connection.host}/${mongoose.connection.name}`);

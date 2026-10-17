@@ -12,6 +12,14 @@ type CustomerRow = {
   totalSpent: number;
   lastOrder: string;
 };
+type RegisteredCustomer = {
+  _id: string;
+  name: string;
+  email: string;
+  createdAt: string;
+  totalOrders: number;
+  totalSpent: number;
+};
 
 export const Route = createFileRoute("/admin/customers")({
   head: () => ({ meta: [{ title: "Customers - ZORO Admin" }] }),
@@ -21,7 +29,12 @@ export const Route = createFileRoute("/admin/customers")({
 function AdminCustomers() {
   const customers = useQuery({
     queryKey: ["admin-customers"],
-    queryFn: () => adminApi.dashboard<{ success: true; customers: CustomerRow[] }>("customers"),
+    queryFn: () =>
+      adminApi.dashboard<{
+        success: true;
+        customers: CustomerRow[];
+        accounts: RegisteredCustomer[];
+      }>("customers"),
   });
 
   return (
@@ -53,6 +66,44 @@ function AdminCustomers() {
             </tbody>
           </table>
         </div>
+      </AdminCard>
+      <AdminCard>
+        <h2 className="mb-4 text-lg font-bold">Registered accounts</h2>
+        {customers.isLoading ? (
+          <p>Loading accounts…</p>
+        ) : customers.isError ? (
+          <button className="text-link" onClick={() => customers.refetch()}>
+            Retry loading customers
+          </button>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[600px] text-left text-sm">
+              <thead>
+                <tr>
+                  <th className="py-3">Name</th>
+                  <th>Email</th>
+                  <th>Orders</th>
+                  <th>Total spent</th>
+                  <th>Joined</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(customers.data?.accounts || []).map((account) => (
+                  <tr key={account._id} className="border-t border-slate-100">
+                    <td className="py-3 font-semibold">{account.name}</td>
+                    <td>{account.email}</td>
+                    <td>{account.totalOrders}</td>
+                    <td>{formatPKR(account.totalSpent)}</td>
+                    <td>{new Date(account.createdAt).toLocaleDateString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {!customers.data?.accounts?.length && (
+              <p className="py-5 text-sm text-muted-foreground">No customer accounts yet.</p>
+            )}
+          </div>
+        )}
       </AdminCard>
     </AdminLayout>
   );

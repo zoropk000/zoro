@@ -12,6 +12,8 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
+    "test:commerce": "node --test scripts/commerce.test.mjs scripts/api-handler.test.mjs",
+    "typecheck": "tsc --noEmit",
     "format": "prettier --write ."
   },
   "dependencies": {
@@ -65,7 +67,7 @@
     "lucide-react": "^0.575.0",
     "mongoose": "^8.24.1",
     "multer": "^2.2.0",
-    "nodemailer": "^9.0.3",
+    "nodemailer": "^10.1.2",
     "react": "^19.2.0",
     "react-day-picker": "^9.14.0",
     "react-dom": "^19.2.0",
@@ -80,7 +82,6 @@
     "vite-tsconfig-paths": "^6.0.2",
     "zod": "^3.24.2"
   },
-
   "devDependencies": {
     "@emnapi/core": "^1.11.2",
     "@emnapi/runtime": "^1.11.2",
@@ -96,6 +97,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^15.15.0",
+    "mongodb-memory-server-core": "^11.3.0",
     "nitro": "3.0.260603-beta",
     "prettier": "^3.7.3",
     "typescript": "^5.8.3",

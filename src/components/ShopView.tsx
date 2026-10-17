@@ -1,273 +1,489 @@
-import { useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { Filter, Search, X, ArrowUpRight, ChevronRight } from "lucide-react";
 import { Layout } from "./Layout";
 import { ProductCard } from "./ProductCard";
 import { getProducts } from "@/services/productService";
-import { Filter, Search, X } from "lucide-react";
-import { useLanguage } from "@/lib/language-context";
-import { Skeleton } from "@/components/ui/skeleton";
-
-type Category = "All" | "Men" | "Women";
-type Sort = "popular" | "newest" | "price-asc" | "price-desc";
-
-const ALL_SIZES = [36, 37, 38, 39, 40, 41, 42, 43, 44, 45];
+import { useStorefront, defaultCategories } from "@/services/storefrontService";
+import { apiRequest } from "@/services/api";
+import { validateShopSearch, type ShopSearch } from "@/lib/shop-search";
 
 export type ShopFilter = {
-  initialCategory?: Category;
+  initialCategory?: "All" | "Men" | "Women";
   saleOnly?: boolean;
   title?: string;
   subtitle?: string;
 };
-
+type Facets = { sizes: string[]; brands: string[]; colors: string[]; fragranceTypes: string[] };
 export function ShopView({
   initialCategory = "All",
   saleOnly = false,
   title,
   subtitle,
 }: ShopFilter) {
-  const { t } = useLanguage();
-  const [query, setQuery] = useState("");
-  const [category, setCategory] = useState<Category>(initialCategory);
-  const [sizes, setSizes] = useState<number[]>([]);
-  const [priceIdx, setPriceIdx] = useState<number | null>(null);
-  const [sort, setSort] = useState<Sort>("popular");
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-
-  const PRICE_RANGES = [
-    { label: t("priceUnder3k"), min: 0, max: 3000 },
-    { label: t("price3to5k"), min: 3000, max: 5000 },
-    { label: t("price5to8k"), min: 5000, max: 8000 },
-    { label: t("priceAbove8k"), min: 8000, max: Infinity },
-  ];
-
-  const CATEGORIES: { key: Category; label: string }[] = [
-    { key: "All", label: t("filterAll") },
-    { key: "Men", label: t("filterMen") },
-    { key: "Women", label: t("filterWomen") },
-  ];
-
-  const priceRange = priceIdx !== null ? PRICE_RANGES[priceIdx] : null;
+  const rawSearch = useSearch({ strict: false });
+  const search = validateShopSearch(rawSearch);
+  const navigate = useNavigate();
+  const gender =
+    search.gender ||
+    (initialCategory === "All" ? undefined : (initialCategory.toLowerCase() as "men" | "women"));
+  const [query, setQuery] = useState(search.q || "");
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const { data: config } = useStorefront();
+  const categories = config?.categories || defaultCategories;
+  const category = categories.find((c) => c.slug === search.category);
+  const isPerfume = category?.type === "perfumes";
+  const isSized = ["shoes", "clothing"].includes(category?.type || "");
+  const collection = saleOnly ? "sale" : search.collection;
+  const page = Math.max(1, Math.floor(search.page || 1));
+  const sort = search.sort || (collection === "new" ? "newest" : "popular");
+  const update = (values: Partial<ShopSearch>) => {
+    navigate({
+      to: "/shop",
+      search: validateShopSearch({ ...search, gender, collection, page: 1, ...values }),
+    });
+  };
+  useEffect(() => {
+    setQuery(search.q || "");
+  }, [search.q]);
+  useEffect(() => {
+    if (query === (search.q || "")) return;
+    const timer = setTimeout(() => update({ q: query.trim() || undefined }), 350);
+    return () => clearTimeout(timer);
+  }, [query, search.q]);
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileOpen(false);
+    };
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.body.style.overflow = previous;
+      document.removeEventListener("keydown", escape);
+    };
+  }, [mobileOpen]);
+  const { data: facets } = useQuery({
+    queryKey: ["catalog-facets", search.category, gender],
+    queryFn: () =>
+      apiRequest<Facets>(
+        `/storefront/facets?${new URLSearchParams({ ...(search.category ? { category: search.category } : {}), ...(gender ? { gender } : {}) })}`,
+      ),
+    staleTime: 60_000,
+  });
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
-    queryKey: ["products", { query, category, sizes, priceIdx, sort, saleOnly }],
+    queryKey: ["catalog", search, gender, collection, page],
     queryFn: () =>
       getProducts({
-        page: 1,
-        limit: 96,
-        search: query.trim() || undefined,
-        gender: category === "All" ? undefined : (category.toLowerCase() as "men" | "women"),
-        size: sizes.length === 1 ? String(sizes[0]) : undefined,
-        minPrice: priceRange?.min,
-        maxPrice: priceRange?.max === Infinity ? undefined : priceRange?.max,
+        page,
+        limit: 24,
+        search: search.q,
+        category: search.category,
+        subcategory: search.subcategory,
+        gender,
+        onSale: collection === "sale" || undefined,
+        bestSeller: collection === "bestsellers" || undefined,
+        newArrival: collection === "new" || undefined,
+        featured: collection === "featured" || undefined,
         sort,
-        onSale: saleOnly || undefined,
+        size: isSized ? search.size : undefined,
+        bottleSize: isPerfume ? search.bottleSize : undefined,
+        fragranceType: isPerfume ? search.fragranceType : undefined,
+        minPrice: search.minPrice,
+        maxPrice: search.maxPrice,
+        brand: search.brand,
+        color: search.color,
+        rating: search.rating,
+        availability: search.availability,
       }),
   });
-
-  const filtered =
-    data?.products.filter((product) => {
-      if (!sizes.length || sizes.length === 1) return true;
-      return sizes.some((size) =>
-        product.sizes.some((row) => row.size === String(size) && row.stock > 0),
-      );
-    }) || [];
-
-  const clearAll = () => {
-    setQuery("");
-    setCategory(initialCategory);
-    setSizes([]);
-    setPriceIdx(null);
-    setSort("popular");
-  };
-
-  const toggleSize = (s: number) =>
-    setSizes((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
-
-  const filtersUI = (
-    <div className="space-y-6">
-      <FilterGroup label={t("filterCategory")}>
-        <div className="flex flex-wrap gap-2">
-          {CATEGORIES.map((c) => (
-            <button
-              key={c.key}
-              onClick={() => setCategory(c.key)}
-              className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-                category === c.key
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border bg-background text-foreground hover:bg-secondary"
-              }`}
-            >
-              {c.label}
-            </button>
-          ))}
+  const clear = () => navigate({ to: "/shop", search: { gender, collection } });
+  const titleText =
+    title ||
+    (search.q
+      ? `Results for “${search.q}”`
+      : category
+        ? `${category.name}.`
+        : {
+            new: "Fresh arrivals.",
+            bestsellers: "The best sellers.",
+            featured: "Our favourite finds.",
+            sale: "The sale edit.",
+          }[collection || ""] || "Find your everyday.");
+  const activeEntries = Object.entries(search).filter(
+    ([key, value]) => !["page", "sort", "collection", "q"].includes(key) && value !== undefined,
+  );
+  const filters = (
+    <>
+      <FilterGroup title="Shop by category">
+        <div className="filter-category">
+          <button
+            className={!search.category ? "selected" : ""}
+            onClick={() =>
+              update({
+                category: undefined,
+                subcategory: undefined,
+                size: undefined,
+                bottleSize: undefined,
+                fragranceType: undefined,
+              })
+            }
+          >
+            All departments
+          </button>
+          {categories
+            .filter((c) => !c.parent)
+            .map((c) => (
+              <button
+                key={c.slug}
+                className={search.category === c.slug ? "selected" : ""}
+                onClick={() =>
+                  update({
+                    category: c.slug,
+                    subcategory: undefined,
+                    size: undefined,
+                    bottleSize: undefined,
+                    fragranceType: undefined,
+                  })
+                }
+              >
+                {c.name}
+              </button>
+            ))}
         </div>
       </FilterGroup>
-      <FilterGroup label={t("filterSize")}>
-        <div className="flex flex-wrap gap-2">
-          {ALL_SIZES.map((s) => (
-            <button
-              key={s}
-              onClick={() => toggleSize(s)}
-              className={`h-11 w-11 rounded-lg border text-sm font-semibold transition ${
-                sizes.includes(s)
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border bg-background hover:bg-secondary"
-              }`}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-      </FilterGroup>
-      <FilterGroup label={t("filterPrice")}>
-        <div className="flex flex-col gap-2">
-          {PRICE_RANGES.map((r, i) => (
-            <button
-              key={r.label}
-              onClick={() => setPriceIdx(priceIdx === i ? null : i)}
-              className={`rounded-lg border px-3 py-2.5 text-left text-sm font-medium transition ${
-                priceIdx === i
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border bg-background hover:bg-secondary"
-              }`}
-            >
-              {r.label}
-            </button>
-          ))}
-        </div>
-      </FilterGroup>
-      <FilterGroup label={t("filterSortBy")}>
+      {search.category && (
+        <FilterGroup title="Category">
+          <select
+            aria-label="Subcategory"
+            value={search.subcategory || ""}
+            onChange={(e) => update({ subcategory: e.target.value || undefined })}
+          >
+            <option value="">All {category?.name.toLowerCase()}</option>
+            {categories
+              .filter((c) => c.parent === search.category)
+              .map((c) => (
+                <option key={c.slug} value={c.slug}>
+                  {c.name}
+                </option>
+              ))}
+          </select>
+        </FilterGroup>
+      )}
+      <FilterGroup title="For">
         <select
-          value={sort}
-          onChange={(e) => setSort(e.target.value as Sort)}
-          className="w-full rounded-lg border border-border bg-background px-3 py-3 text-sm font-medium"
+          aria-label="Shop by gender"
+          value={gender || ""}
+          onChange={(e) =>
+            update({ gender: (e.target.value as ShopSearch["gender"]) || undefined })
+          }
         >
-          <option value="popular">{t("sortPopular")}</option>
-          <option value="newest">{t("sortNewest")}</option>
-          <option value="price-asc">{t("sortPriceLow")}</option>
-          <option value="price-desc">{t("sortPriceHigh")}</option>
+          <option value="">Everyone</option>
+          <option value="men">Men</option>
+          <option value="women">Women</option>
+          <option value="unisex">Unisex</option>
         </select>
       </FilterGroup>
-      <button
-        onClick={clearAll}
-        className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm font-semibold hover:bg-secondary"
-      >
-        {t("clearFilters")}
+      <FilterGroup title="Price range (PKR)">
+        <div className="flex gap-2">
+          <input
+            aria-label="Minimum price"
+            type="number"
+            min="0"
+            placeholder="Min"
+            value={search.minPrice ?? ""}
+            onChange={(e) =>
+              update({ minPrice: e.target.value ? Number(e.target.value) : undefined })
+            }
+          />
+          <input
+            aria-label="Maximum price"
+            type="number"
+            min="0"
+            placeholder="Max"
+            value={search.maxPrice ?? ""}
+            onChange={(e) =>
+              update({ maxPrice: e.target.value ? Number(e.target.value) : undefined })
+            }
+          />
+        </div>
+      </FilterGroup>
+      <FilterGroup title="Brand">
+        <select
+          aria-label="Brand"
+          value={search.brand || ""}
+          onChange={(e) => update({ brand: e.target.value || undefined })}
+        >
+          <option value="">All brands</option>
+          {[...new Set([...(config?.brands || []), ...(facets?.brands || [])])]
+            .sort()
+            .map((brand) => (
+              <option key={brand}>{brand}</option>
+            ))}
+        </select>
+      </FilterGroup>
+      {isSized && (
+        <FilterGroup title={category?.type === "shoes" ? "Shoe size" : "Clothing size"}>
+          <div className="filter-sizes">
+            {(facets?.sizes.length
+              ? facets.sizes
+              : category?.type === "shoes"
+                ? ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45"]
+                : ["XS", "S", "M", "L", "XL", "XXL"]
+            ).map((size) => (
+              <button
+                key={size}
+                aria-pressed={search.size === size}
+                className={search.size === size ? "selected" : ""}
+                onClick={() => update({ size: search.size === size ? undefined : size })}
+              >
+                {size}
+              </button>
+            ))}
+          </div>
+        </FilterGroup>
+      )}
+      {isPerfume && (
+        <>
+          <FilterGroup title="Bottle size">
+            <select
+              aria-label="Bottle size"
+              value={search.bottleSize || ""}
+              onChange={(e) => update({ bottleSize: e.target.value || undefined })}
+            >
+              <option value="">All volumes</option>
+              {(facets?.sizes.length ? facets.sizes : ["30ml", "50ml", "100ml", "200ml"]).map(
+                (size) => (
+                  <option key={size}>{size}</option>
+                ),
+              )}
+            </select>
+          </FilterGroup>
+          <FilterGroup title="Fragrance type">
+            <select
+              aria-label="Fragrance type"
+              value={search.fragranceType || ""}
+              onChange={(e) => update({ fragranceType: e.target.value || undefined })}
+            >
+              <option value="">All types</option>
+              {[
+                ...new Set([
+                  "Eau de Parfum",
+                  "Eau de Toilette",
+                  "Parfum",
+                  "Body Mist",
+                  "Attar",
+                  ...(facets?.fragranceTypes || []),
+                ]),
+              ].map((type) => (
+                <option key={type}>{type}</option>
+              ))}
+            </select>
+          </FilterGroup>
+        </>
+      )}
+      <FilterGroup title="Colour">
+        <select
+          aria-label="Colour"
+          value={search.color || ""}
+          onChange={(e) => update({ color: e.target.value || undefined })}
+        >
+          <option value="">All colours</option>
+          {(facets?.colors || []).map((color) => (
+            <option key={color}>{color}</option>
+          ))}
+        </select>
+      </FilterGroup>
+      <FilterGroup title="Availability">
+        <label>
+          <input
+            type="checkbox"
+            checked={search.availability === "in-stock"}
+            onChange={(e) => update({ availability: e.target.checked ? "in-stock" : undefined })}
+          />
+          In stock only
+        </label>
+      </FilterGroup>
+      <FilterGroup title="Customer rating">
+        <select
+          aria-label="Minimum customer rating"
+          value={search.rating || ""}
+          onChange={(e) => update({ rating: e.target.value ? Number(e.target.value) : undefined })}
+        >
+          <option value="">All ratings</option>
+          <option value="4">4 stars & above</option>
+          <option value="3">3 stars & above</option>
+        </select>
+      </FilterGroup>
+      <button className="filter-reset" onClick={clear}>
+        Clear all filters
       </button>
-    </div>
+    </>
   );
-
   return (
     <Layout>
-      <div className="mx-auto max-w-7xl px-4 py-8">
-        <div className="mb-6 text-center">
-          <h1 className="text-3xl font-extrabold text-foreground sm:text-4xl">
-            {title ?? t("allShoesTitle")}
-          </h1>
-          <p className="mt-2 text-muted-foreground">{subtitle ?? t("allShoesSub")}</p>
+      <div className="catalog-header">
+        <div className="store-container">
+          <div className="breadcrumbs">
+            <a href="/">Home</a>
+            <ChevronRight size={10} />
+            <span>{category?.name || "Shop"}</span>
+          </div>
+          <span className="small-eyebrow">THE ZORO COLLECTION</span>
+          <h1>{titleText}</h1>
+          <p>{subtitle || "Considered pieces, great finds, and a little more you."}</p>
         </div>
-
-        <div className="mb-4 flex items-center gap-3">
-          <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+      </div>
+      <div className="store-container catalog-layout">
+        <aside className="catalog-sidebar">{filters}</aside>
+        <div className="catalog-products">
+          <form
+            className="mb-5 flex items-center gap-3 border border-border px-3 py-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              update({ q: query.trim() || undefined });
+            }}
+          >
+            <Search size={16} />
             <input
-              type="text"
+              className="min-w-0 flex-1 bg-transparent py-1 text-xs outline-none"
+              aria-label="Search this collection"
+              placeholder="Search this collection…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder={t("searchPlaceholder")}
-              className="w-full rounded-xl border border-border bg-background py-3 pl-11 pr-4 text-base outline-none focus:border-primary"
             />
+            <button type="submit" aria-label="Search collection">
+              <ArrowUpRight size={16} />
+            </button>
+          </form>
+          <div className="catalog-toolbar">
+            <span aria-live="polite">
+              {isFetching ? "Finding your favourites…" : `${data?.pagination.total || 0} products`}
+            </span>
+            <button className="mobile-filter-button" onClick={() => setMobileOpen(true)}>
+              <Filter size={13} />
+              Filters
+            </button>
+            <select
+              aria-label="Sort products"
+              value={sort}
+              onChange={(e) => update({ sort: e.target.value })}
+            >
+              <option value="popular">Most popular</option>
+              <option value="newest">Newest first</option>
+              <option value="price-asc">Price: low to high</option>
+              <option value="price-desc">Price: high to low</option>
+              <option value="discount">Biggest discounts</option>
+            </select>
           </div>
-          <button
-            onClick={() => setMobileFiltersOpen(true)}
-            className="flex items-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground md:hidden"
-          >
-            <Filter className="h-4 w-4" />
-            {t("filterShoes")}
-          </button>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-[260px_1fr]">
-          <aside className="hidden md:block">{filtersUI}</aside>
-          <div>
-            <div className="mb-3 flex items-center justify-between text-sm text-muted-foreground">
-              <span>
-                {t("showing")} {data?.pagination.total ?? filtered.length} {t("shoesCount")}
-              </span>
-              {isFetching && !isLoading && <span>{t("loadingShoes")}</span>}
+          {activeEntries.length > 0 && (
+            <div className="active-filters">
+              {activeEntries.map(([key, value]) => (
+                <button
+                  key={key}
+                  aria-label={`Remove ${key} filter`}
+                  onClick={() =>
+                    update({
+                      [key]: undefined,
+                      ...(key === "category"
+                        ? {
+                            subcategory: undefined,
+                            size: undefined,
+                            bottleSize: undefined,
+                            fragranceType: undefined,
+                          }
+                        : {}),
+                    })
+                  }
+                >
+                  {String(value)}
+                  <X size={11} />
+                </button>
+              ))}
             </div>
-            {isLoading ? (
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="rounded-2xl border border-border bg-card p-3">
-                    <Skeleton className="aspect-square rounded-xl" />
-                    <Skeleton className="mt-4 h-5 w-4/5" />
-                    <Skeleton className="mt-2 h-4 w-full" />
-                    <Skeleton className="mt-4 h-10 w-full rounded-lg" />
-                  </div>
-                ))}
-              </div>
-            ) : isError ? (
-              <div className="rounded-2xl border border-border bg-card p-10 text-center">
-                <p className="text-lg font-semibold">{t("couldNotLoadShoes")}</p>
-                <button
-                  onClick={() => refetch()}
-                  className="mt-4 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground"
-                >
-                  {t("tryAgain")}
-                </button>
-              </div>
-            ) : filtered.length === 0 ? (
-              <div className="rounded-2xl border border-border bg-card p-10 text-center">
-                <p className="text-lg font-semibold">{t("noShoesFound")}</p>
-                <button
-                  onClick={clearAll}
-                  className="mt-4 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground"
-                >
-                  {t("viewAllShoes")}
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
-                {filtered.map((p) => (
+          )}
+          {isLoading ? (
+            <div className="store-product-grid">
+              {Array.from({ length: 6 }, (_, i) => (
+                <div className="product-skeleton" key={i}>
+                  <div />
+                  <span />
+                  <span />
+                </div>
+              ))}
+            </div>
+          ) : isError ? (
+            <div className="collection-empty">
+              <h3>We couldn’t load this collection.</h3>
+              <p>Please try again in a moment.</p>
+              <button className="text-link" onClick={() => refetch()}>
+                Try again
+              </button>
+            </div>
+          ) : !data?.products.length ? (
+            <div className="collection-empty">
+              <Search size={25} />
+              <h3>No finds just yet.</h3>
+              <p>Try another search or give your filters a little room.</p>
+              <button className="text-link" onClick={clear}>
+                Clear filters <ArrowUpRight size={15} />
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="store-product-grid">
+                {data.products.map((p) => (
                   <ProductCard key={p.id} product={p} />
                 ))}
               </div>
-            )}
-          </div>
+              {data.pagination.pages > 1 && (
+                <div className="pagination">
+                  <button disabled={page <= 1} onClick={() => update({ page: page - 1 })}>
+                    Previous
+                  </button>
+                  <span>
+                    Page {page} of {data.pagination.pages}
+                  </span>
+                  <button
+                    disabled={page >= data.pagination.pages}
+                    onClick={() => update({ page: page + 1 })}
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
-
-      {mobileFiltersOpen && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-background md:hidden">
-          <div className="flex items-center justify-between border-b border-border px-4 py-4">
-            <h3 className="text-lg font-bold">{t("filterShoes")}</h3>
-            <button
-              onClick={() => setMobileFiltersOpen(false)}
-              className="rounded-md p-2"
-              aria-label="Close"
-            >
-              <X className="h-5 w-5" />
+      {mobileOpen && (
+        <div
+          className="mobile-filter-drawer"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Product filters"
+        >
+          <header>
+            <h2>Find your favourites</h2>
+            <button aria-label="Close filters" onClick={() => setMobileOpen(false)} autoFocus>
+              <X size={22} />
             </button>
-          </div>
-          <div className="flex-1 overflow-y-auto p-4">{filtersUI}</div>
-          <div className="border-t border-border p-4">
-            <button
-              onClick={() => setMobileFiltersOpen(false)}
-              className="w-full rounded-xl bg-primary py-4 text-base font-bold text-primary-foreground"
-            >
-              {t("showShoes")} {filtered.length} {t("shoesCount")}
-            </button>
-          </div>
+          </header>
+          <div>{filters}</div>
+          <button className="store-button" onClick={() => setMobileOpen(false)}>
+            Show {data?.pagination.total || 0} products <ArrowUpRight size={17} />
+          </button>
         </div>
       )}
     </Layout>
   );
 }
-
-function FilterGroup({ label, children }: { label: string; children: React.ReactNode }) {
+function FilterGroup({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div>
-      <div className="mb-3 text-sm font-bold uppercase tracking-wider text-foreground">{label}</div>
+    <div className="filter-group">
+      <h3>{title}</h3>
       {children}
     </div>
   );

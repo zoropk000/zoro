@@ -5,10 +5,12 @@
 //     error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig, type LovableViteTanstackOptions } from "@lovable.dev/vite-tanstack-config";
+import { devApiPlugin } from "./scripts/dev-api.ts";
 
 const apiHandler = "./api/[...path].js";
 
 export default defineConfig({
+  plugins: [devApiPlugin()],
   nitro: {
     preset: "vercel",
     handlers: [

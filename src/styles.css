@@ -1,6 +1,7 @@
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
+@import "./storefront.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -36,14 +37,14 @@
   --color-whatsapp-foreground: var(--whatsapp-foreground);
   --color-sale: var(--sale);
   --color-sale-foreground: var(--sale-foreground);
-  --font-sans: "Poppins", "Noto Sans", system-ui, sans-serif;
+  --font-sans: "DM Sans", "Noto Sans", system-ui, sans-serif;
   --font-urdu: "Noto Nastaliq Urdu", "Noto Sans Arabic", serif;
 }
 
 :root {
   --radius: 0.75rem;
   --background: oklch(1 0 0);
-  --foreground: oklch(0.18 0.02 260);
+  --foreground: #252620;
 
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.18 0.02 260);
@@ -51,8 +52,8 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.18 0.02 260);
 
-  /* Deep navy brand */
-  --primary: oklch(0.24 0.06 265);
+  /* ZORO charcoal brand */
+  --primary: #252620;
   --primary-foreground: oklch(0.99 0 0);
 
   /* Soft gray sections */
@@ -99,7 +100,10 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     letter-spacing: -0.01em;
   }
 

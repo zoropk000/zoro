@@ -6,9 +6,10 @@ const orderItemSchema = new mongoose.Schema(
     name: { type: String, required: true },
     image: { type: String, default: "" },
     size: { type: String, required: true },
+    color: { type: String, default: "" },
     quantity: { type: Number, required: true, min: 1 },
     price: { type: Number, required: true, min: 0 },
-    gender: { type: String, enum: ["men", "women"], required: true },
+    gender: { type: String, enum: ["men", "women", "unisex"], required: true },
   },
   { _id: false },
 );
@@ -16,11 +17,16 @@ const orderItemSchema = new mongoose.Schema(
 const orderSchema = new mongoose.Schema(
   {
     orderNumber: { type: String, required: true, unique: true, index: true },
+    checkoutKey: { type: String, unique: true, sparse: true, default: undefined },
+    customerAccount: { type: mongoose.Schema.Types.ObjectId, ref: "Customer", index: true },
+    couponCode: { type: String, default: "" },
+    discount: { type: Number, min: 0, default: 0 },
     customer: {
       name: { type: String, required: true, trim: true },
       phone: { type: String, required: true, trim: true, index: true },
       email: { type: String, trim: true, default: "" },
       city: { type: String, required: true, trim: true },
+      province: { type: String, trim: true, default: "" },
       address: { type: String, required: true, trim: true },
       landmark: { type: String, trim: true, default: "" },
     },
@@ -57,6 +63,12 @@ const orderSchema = new mongoose.Schema(
       url: { type: String, default: "" },
       publicId: { type: String, default: "" },
       uploadedAt: { type: Date, default: null },
+      deliveryType: { type: String, default: "upload" },
+    },
+    paymentReview: {
+      reviewedAt: { type: Date, default: null },
+      reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" },
+      note: { type: String, default: "", maxlength: 500 },
     },
     inventoryReduced: { type: Boolean, default: true },
     deliveryEstimate: {

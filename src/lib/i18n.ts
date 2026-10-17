@@ -129,7 +129,7 @@ export const translations = {
     // === CART ===
     yourCart: "Your Shopping Cart",
     cartEmpty: "Your cart is empty.",
-    cartEmptyText: "Add your favorite shoes and they will appear here.",
+    cartEmptyText: "Add your favourite finds and they will appear here.",
     shopShoesBtn: "Shop Shoes",
     orderSummary: "Order Summary",
     products: "Products",
@@ -207,7 +207,7 @@ export const translations = {
     orderSaved: "Your order has been saved.",
     whatHappensNext: "What happens next?",
     nextStep1: "We will confirm your order by call or WhatsApp.",
-    nextStep2: "Your shoes will be packed carefully.",
+    nextStep2: "Your order will be packed carefully.",
     nextStep3: "Your order will be delivered to your address.",
     nextStep4COD: "Pay cash when it arrives.",
     nextStep4Paid: "Thank you for your payment.",
@@ -227,7 +227,7 @@ export const translations = {
     statusReceived: "Order Received",
     statusConfirmed: "Order Confirmed",
     statusWaitingConfirm: "Waiting for Confirmation",
-    statusPrepared: "Shoes Being Prepared",
+    statusPrepared: "Order Being Prepared",
     statusShipped: "Shipped",
     statusOutForDelivery: "Out for Delivery",
     statusDelivered: "Delivered",
@@ -258,11 +258,11 @@ export const translations = {
     // === ABOUT ===
     aboutTitle: "About",
     aboutP1:
-      "is a Pakistani shoe brand focused on comfortable, affordable shoes for the whole family. We deliver across Pakistan with Cash on Delivery so you can shop with confidence.",
+      "brings clothing, shoes, perfumes and accessories together for your everyday. We deliver across Pakistan, with cash on delivery and personal customer support.",
     aboutP2:
-      "Our mission is to make online shoe shopping simple and trustworthy - even for first-time online shoppers. No account is needed. Just choose your shoes, enter your details, and pay cash when your order arrives.",
+      "We make online shopping simple. Explore our collections, save your favourites, and shop as a guest or create an account for your order history. Choose cash on delivery or one of our manual transfer options at checkout.",
     aboutWhatWeOffer: "What we offer",
-    aboutOffer1: "Quality checked shoes for men, women, and everyday wear",
+    aboutOffer1: "Clothing, shoes, perfumes and accessories for men and women",
     aboutOffer2: "Cash on Delivery all over Pakistan",
     aboutOffer3: "Easy size exchange",
     aboutOffer4: "Support in Urdu and English on WhatsApp",
@@ -504,7 +504,7 @@ export const translations = {
     // === CART ===
     yourCart: "آپ کے جوتے",
     cartEmpty: "آپ کا کارٹ خالی ہے۔",
-    cartEmptyText: "اپنے پسندیدہ جوتے شامل کریں، وہ یہاں نظر آئیں گے۔",
+    cartEmptyText: "اپنی پسندیدہ مصنوعات شامل کریں، وہ یہاں نظر آئیں گی۔",
     shopShoesBtn: "جوتے دیکھیں",
     orderSummary: "آرڈر کا خلاصہ",
     products: "جوتے",
@@ -633,11 +633,11 @@ export const translations = {
     // === ABOUT ===
     aboutTitle: "ہمارے بارے میں",
     aboutP1:
-      "پاکستان کا ایک جوتوں کا برانڈ ہے جو پورے خاندان کے لیے آرام دہ اور سستے جوتے فراہم کرتا ہے۔ ہم کیش آن ڈیلیوری کے ساتھ پورے پاکستان میں ڈیلیور کرتے ہیں۔",
+      "روزمرہ زندگی کے لیے کپڑے، جوتے، پرفیوم اور لوازمات ایک جگہ پیش کرتا ہے۔ ہم کیش آن ڈیلیوری اور کسٹمر سپورٹ کے ساتھ پورے پاکستان میں ڈیلیور کرتے ہیں۔",
     aboutP2:
-      "ہمارا مقصد آن لائن جوتوں کی خریداری کو آسان اور قابل اعتماد بنانا ہے۔ اکاؤنٹ بنانے کی ضرورت نہیں۔ بس جوتے چنیں، تفصیل درج کریں، اور آرڈر ملنے پر ادائیگی کریں۔",
+      "ہم آن لائن خریداری کو آسان بناتے ہیں۔ اپنی پسندیدہ مصنوعات چنیں اور بطور مہمان خریدیں یا آرڈر کی تفصیل کے لیے اکاؤنٹ بنائیں۔ کیش آن ڈیلیوری یا آن لائن ٹرانسفر کا انتخاب چیک آؤٹ پر کریں۔",
     aboutWhatWeOffer: "ہم کیا پیش کرتے ہیں",
-    aboutOffer1: "مردوں، خواتین اور روزانہ استعمال کے لیے معیاری جوتے",
+    aboutOffer1: "مردوں اور خواتین کے لیے کپڑے، جوتے، پرفیوم اور لوازمات",
     aboutOffer2: "پورے پاکستان میں کیش آن ڈیلیوری",
     aboutOffer3: "آسان سائز تبدیلی",
     aboutOffer4: "واٹس ایپ پر اردو اور انگریزی میں سپورٹ",

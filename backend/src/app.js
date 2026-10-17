@@ -13,6 +13,7 @@ import { dashboardRoutes } from "./routes/dashboardRoutes.js";
 import { orderRoutes } from "./routes/orderRoutes.js";
 import { productRoutes } from "./routes/productRoutes.js";
 import { uploadRoutes } from "./routes/uploadRoutes.js";
+import { commerceRoutes } from "./routes/commerceRoutes.js";
 
 dotenv.config();
 configureCloudinary();
@@ -67,12 +68,25 @@ app.options("*", cors(corsOptions));
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use(cookieParser());
+app.use((req, res, next) => {
+  const origin = normalizeOrigin(req.get("origin"));
+  if (
+    req.cookies?.customerToken &&
+    !["GET", "HEAD", "OPTIONS"].includes(req.method) &&
+    origin &&
+    !allowedOrigins.includes(origin) &&
+    ![`https://${req.get("host")}`, `http://${req.get("host")}`].includes(origin)
+  )
+    return res.status(403).json({ success: false, message: "This request origin is not allowed." });
+  next();
+});
 
 app.get("/api/health", (req, res) => {
   res.json({ success: true, message: "ZORO API is running" });
 });
 
 app.use("/api/products", productRoutes);
+app.use("/api", commerceRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin/auth", authRoutes);
 app.use("/api/admin/products", protectAdmin, requireAdmin, adminProductRoutes);

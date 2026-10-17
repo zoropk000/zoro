@@ -1,16 +1,19 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Layout } from "@/components/Layout";
 import { useCart } from "@/lib/cart-context";
 import { formatPKR } from "@/lib/currency";
 import { calcDeliveryFee } from "@/lib/orders";
-import { createOrder } from "@/services/orderService";
+import { createOrder, uploadPaymentProof } from "@/services/orderService";
 import { API_BASE_URL } from "@/services/api";
 import { pakistaniCities } from "@/data/cities";
 import { validatePakistaniPhone, normalizePhone } from "@/lib/validation";
 import { Lock, Mail, Phone, ShieldCheck, Wallet, X } from "lucide-react";
 import { useLanguage } from "@/lib/language-context";
 import { toast } from "sonner";
+import { useCustomer } from "@/lib/customer-context";
+import { useStorefront } from "@/services/storefrontService";
+import { apiRequest } from "@/services/api";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({ meta: [{ title: "Checkout - ZORO" }] }),
@@ -18,20 +21,40 @@ export const Route = createFileRoute("/checkout")({
 });
 
 type Errors = Partial<
-  Record<"name" | "phone" | "email" | "city" | "cityOther" | "address", string>
+  Record<"name" | "phone" | "email" | "province" | "city" | "cityOther" | "address", string>
 >;
 
 function CheckoutPage() {
-  const { lines, subtotal, clearCart, isLoading } = useCart();
+  const { lines, items, subtotal, clearCart, isLoading, loadError, unavailableCount } = useCart();
+  const { customer } = useCustomer();
+  const { data: storefront } = useStorefront();
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const delivery = calcDeliveryFee(subtotal);
-  const total = subtotal + delivery;
+  const delivery = storefront?.shipping
+    ? subtotal >= storefront.shipping.freeThreshold
+      ? 0
+      : storefront.shipping.fee
+    : calcDeliveryFee(subtotal);
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(
+    null,
+  );
+  const [couponPending, setCouponPending] = useState(false);
+  const total = subtotal + delivery - (appliedCoupon?.discount || 0);
+  const invalidStock = lines.some(
+    (line) =>
+      line.product.totalStock <= 0 ||
+      (line.product.sizes.find((s) => s.size === line.size)?.stock || 0) <
+        lines
+          .filter((i) => i.productId === line.productId && i.size === line.size)
+          .reduce((sum, i) => sum + i.quantity, 0),
+  );
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [city, setCity] = useState("");
+  const [province, setProvince] = useState("");
   const [cityOther, setCityOther] = useState("");
   const [address, setAddress] = useState("");
   const [landmark, setLandmark] = useState("");
@@ -40,13 +63,29 @@ function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [submitting, setSubmitting] = useState(false);
   const [proofFile, setProofFile] = useState<File | null>(null);
-  const [emailPopup, setEmailPopup] = useState<{ orderNumber: string; email: string } | null>(null);
+  const checkoutAttempt = useRef<{ fingerprint: string; key: string } | null>(null);
+  const [emailPopup, setEmailPopup] = useState<{
+    orderNumber: string;
+    email: string;
+    emailSent?: boolean;
+    proofFailed?: boolean;
+  } | null>(null);
 
   useEffect(() => {
-    if (!isLoading && lines.length === 0) {
+    if (customer) {
+      setName((value) => value || customer.name);
+      setEmail((value) => value || customer.email);
+    }
+  }, [customer?.id]);
+  useEffect(() => {
+    setAppliedCoupon(null);
+  }, [subtotal]);
+
+  useEffect(() => {
+    if (!isLoading && !loadError && items.length === 0 && !emailPopup) {
       navigate({ to: "/cart" });
     }
-  }, [isLoading, lines.length, navigate]);
+  }, [isLoading, items.length, loadError, emailPopup, navigate]);
 
   const validate = (): boolean => {
     const e: Errors = {};
@@ -61,6 +100,7 @@ function CheckoutPage() {
     }
 
     if (!city) e.city = t("errCity");
+    if (!province) e.province = "Please select your province or territory.";
     if (city === "Other" && !cityOther.trim()) e.cityOther = t("errCityOther");
     if (!address.trim()) e.address = t("errAddress");
     setErrors(e);
@@ -68,18 +108,50 @@ function CheckoutPage() {
   };
 
   const handleReviewClick = () => {
+    if (isLoading || loadError || unavailableCount || invalidStock) {
+      toast.error("Please review unavailable items in your shopping bag.");
+      return;
+    }
+    if (
+      paymentMethod !== "cod" &&
+      (!proofFile ||
+        proofFile.size > 4 * 1024 * 1024 ||
+        !["image/jpeg", "image/png", "image/webp"].includes(proofFile.type))
+    ) {
+      toast.error(
+        "Upload your payment screenshot (JPG, PNG or WEBP, up to 4 MB) before placing a prepaid order.",
+      );
+      return;
+    }
     if (validate()) setShowConfirm(true);
   };
 
   const placeOrder = async () => {
     try {
       setSubmitting(true);
+      const fingerprint = JSON.stringify({
+        name,
+        phone,
+        email,
+        province,
+        city,
+        cityOther,
+        address,
+        landmark,
+        paymentMethod,
+        items,
+        coupon: appliedCoupon?.code,
+      });
+      if (checkoutAttempt.current?.fingerprint !== fingerprint)
+        checkoutAttempt.current = { fingerprint, key: crypto.randomUUID() };
       const response = await createOrder({
+        checkoutKey: checkoutAttempt.current!.key,
         customer: {
           name: name.trim(),
           phone: normalizePhone(phone),
           email: email.trim().toLowerCase(),
           city: city === "Other" ? cityOther.trim() : city,
+          province,
           address: address.trim(),
           landmark: landmark.trim() || undefined,
         },
@@ -87,8 +159,10 @@ function CheckoutPage() {
           productId: l.productId,
           size: l.size,
           quantity: l.quantity,
+          color: l.color,
         })),
         paymentMethod: paymentMethod as "cod" | "easypaisa" | "meezan",
+        couponCode: appliedCoupon?.code,
       });
 
       // Save recent order reference to LocalStorage
@@ -103,21 +177,19 @@ function CheckoutPage() {
         console.error("Failed to write recentOrders to LocalStorage", err);
       }
 
-      clearCart();
-      setShowConfirm(false);
-
-      // Upload payment proof screenshot if provided
+      // The order is already saved. If upload fails, tracking offers a safe retry without placing a duplicate order.
       const createdOrderNumber = response.order.orderNumber;
-      if (proofFile && (paymentMethod === "easypaisa" || paymentMethod === "meezan")) {
+      let proofFailed = false;
+      if (
+        proofFile &&
+        !response.order.hasPaymentProof &&
+        (paymentMethod === "easypaisa" || paymentMethod === "meezan")
+      ) {
         try {
-          const formData = new FormData();
-          formData.append("proof", proofFile);
-          await fetch(`${API_BASE_URL}/orders/${createdOrderNumber}/payment-proof`, {
-            method: "POST",
-            body: formData,
-          });
+          if (!response.order.paymentProofToken) throw new Error("Upload authorization missing");
+          await uploadPaymentProof(createdOrderNumber, response.order.paymentProofToken, proofFile);
         } catch (err) {
-          console.warn("Payment proof upload failed:", err);
+          proofFailed = true;
         }
       }
 
@@ -125,7 +197,11 @@ function CheckoutPage() {
       setEmailPopup({
         orderNumber: createdOrderNumber,
         email: email.trim().toLowerCase(),
+        emailSent: response.order.emailSent,
+        proofFailed,
       });
+      clearCart();
+      setShowConfirm(false);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("orderFailed"));
     } finally {
@@ -187,8 +263,40 @@ function CheckoutPage() {
               autoComplete="email"
             />
             <div>
-              <label className="mb-1 block text-sm font-semibold">{t("city")}</label>
+              <label htmlFor="checkout-province" className="mb-1 block text-sm font-semibold">
+                Province / territory
+              </label>
               <select
+                id="checkout-province"
+                autoComplete="address-level1"
+                value={province}
+                onChange={(e) => setProvince(e.target.value)}
+                className="w-full rounded-xl border border-border bg-background px-4 py-4 text-base"
+              >
+                <option value="">Select province / territory</option>
+                {[
+                  "Sindh",
+                  "Punjab",
+                  "Khyber Pakhtunkhwa",
+                  "Balochistan",
+                  "Islamabad Capital Territory",
+                  "Azad Jammu & Kashmir",
+                  "Gilgit-Baltistan",
+                ].map((p) => (
+                  <option key={p}>{p}</option>
+                ))}
+              </select>
+              {errors.province && (
+                <p className="mt-1 text-sm text-destructive">{errors.province}</p>
+              )}
+            </div>
+            <div>
+              <label htmlFor="checkout-city" className="mb-1 block text-sm font-semibold">
+                {t("city")}
+              </label>
+              <select
+                id="checkout-city"
+                autoComplete="address-level2"
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 className="w-full rounded-xl border border-border bg-background px-4 py-4 text-base"
@@ -214,10 +322,12 @@ function CheckoutPage() {
               )}
             </div>
             <div>
-              <label className="mb-1 block text-sm font-semibold">
+              <label htmlFor="checkout-address" className="mb-1 block text-sm font-semibold">
                 {t("completeDeliveryAddress")}
               </label>
               <textarea
+                id="checkout-address"
+                autoComplete="street-address"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder={t("addressPlaceholder")}
@@ -239,7 +349,7 @@ function CheckoutPage() {
             <h2 className="text-lg font-bold">{t("yourOrder")}</h2>
             <div className="space-y-3">
               {lines.map((l) => (
-                <div key={`${l.productId}-${l.size}`} className="flex gap-3">
+                <div key={`${l.productId}-${l.size}-${l.color || ""}`} className="flex gap-3">
                   <img
                     src={l.product.images[0] || "/logo.png"}
                     alt=""
@@ -248,7 +358,8 @@ function CheckoutPage() {
                   <div className="flex-1 text-sm">
                     <div className="font-semibold">{l.product.name}</div>
                     <div className="text-muted-foreground">
-                      {t("sizeLabel")} {l.size} • {t("qtyLabel")} {l.quantity}
+                      {l.size}
+                      {l.color ? ` · ${l.color}` : ""} • {t("qtyLabel")} {l.quantity}
                     </div>
                     <div className="font-semibold">{formatPKR(l.product.price * l.quantity)}</div>
                   </div>
@@ -261,7 +372,70 @@ function CheckoutPage() {
                 label={t("delivery")}
                 value={delivery === 0 ? t("freeDelivery") : formatPKR(delivery)}
               />
+              {appliedCoupon && (
+                <SumRow
+                  label={`Discount (${appliedCoupon.code})`}
+                  value={`−${formatPKR(appliedCoupon.discount)}`}
+                />
+              )}
             </div>
+            <div className="flex gap-2">
+              <input
+                aria-label="Discount code"
+                placeholder="Discount code"
+                className="min-w-0 flex-1 rounded-lg border border-border px-3 py-2 text-sm"
+                value={couponInput}
+                onChange={(e) => setCouponInput(e.target.value)}
+              />
+              <button
+                type="button"
+                className="rounded-lg border border-border px-3 py-2 text-xs font-semibold"
+                disabled={couponPending || !couponInput.trim()}
+                onClick={async () => {
+                  setCouponPending(true);
+                  try {
+                    const result = await apiRequest<{ code: string; discount: number }>(
+                      "/coupons/validate",
+                      {
+                        method: "POST",
+                        body: JSON.stringify({ code: couponInput.trim(), subtotal }),
+                      },
+                    );
+                    setAppliedCoupon(result);
+                    toast.success("Discount applied");
+                  } catch (error) {
+                    setAppliedCoupon(null);
+                    toast.error(
+                      error instanceof Error ? error.message : "This code could not be applied.",
+                    );
+                  } finally {
+                    setCouponPending(false);
+                  }
+                }}
+              >
+                {couponPending ? "Checking…" : "Apply"}
+              </button>
+            </div>
+            {appliedCoupon && (
+              <button
+                className="text-xs underline"
+                onClick={() => {
+                  setAppliedCoupon(null);
+                  setCouponInput("");
+                }}
+              >
+                Remove discount
+              </button>
+            )}
+            {(loadError || unavailableCount > 0 || invalidStock) && (
+              <p className="form-error text-xs">
+                Some items could not be verified or are no longer available.{" "}
+                <a href="/cart" className="underline">
+                  Review your shopping bag
+                </a>{" "}
+                before ordering.
+              </p>
+            )}
             <div className="rounded-xl bg-secondary p-4">
               <div className="text-sm text-muted-foreground">{t("youWillPay")}</div>
               <div className="text-2xl font-extrabold">{formatPKR(total)}</div>
@@ -316,7 +490,7 @@ function CheckoutPage() {
                   </label>
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/webp"
                     onChange={(e) => setProofFile(e.target.files?.[0] ?? null)}
                     className="w-full text-sm file:mr-4 file:rounded-full file:border-0 file:bg-primary/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20"
                   />
@@ -349,7 +523,7 @@ function CheckoutPage() {
                   </label>
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/webp"
                     onChange={(e) => setProofFile(e.target.files?.[0] ?? null)}
                     className="w-full text-sm file:mr-4 file:rounded-full file:border-0 file:bg-primary/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20"
                   />
@@ -365,6 +539,9 @@ function CheckoutPage() {
             <button
               type="button"
               onClick={handleReviewClick}
+              disabled={
+                isLoading || loadError || unavailableCount > 0 || invalidStock || !lines.length
+              }
               className="w-full rounded-xl bg-primary py-5 text-lg font-extrabold text-primary-foreground hover:bg-primary/90"
             >
               {t("placeMyOrder")}
@@ -398,9 +575,13 @@ function CheckoutPage() {
             </div>
             <div className="space-y-3 text-sm">
               {lines.map((l) => (
-                <div key={`${l.productId}-${l.size}`} className="flex justify-between">
+                <div
+                  key={`${l.productId}-${l.size}-${l.color || ""}`}
+                  className="flex justify-between"
+                >
                   <span>
-                    {l.product.name} ({t("sizeLabel")} {l.size}) × {l.quantity}
+                    {l.product.name} ({l.size}
+                    {l.color ? ` · ${l.color}` : ""}) × {l.quantity}
                   </span>
                   <span className="font-semibold">{formatPKR(l.product.price * l.quantity)}</span>
                 </div>
@@ -419,7 +600,7 @@ function CheckoutPage() {
                 <div>{phone}</div>
                 <div>{address}</div>
                 <div>
-                  {finalCity}
+                  {finalCity}, {province}
                   {landmark ? `, ${landmark}` : ""}
                 </div>
               </div>
@@ -473,21 +654,26 @@ function CheckoutPage() {
 
                 {/* Email message */}
                 <p className="mt-5 text-base font-semibold leading-relaxed text-foreground">
-                  {t("checkEmailNotification")}
+                  {emailPopup.proofFailed
+                    ? "Your order is saved, but the screenshot could not be uploaded. Open tracking below and send it again for approval."
+                    : paymentMethod !== "cod"
+                      ? "Your payment screenshot has been sent for admin review. You can follow approval and delivery in order tracking."
+                      : "Your order is saved. You can follow confirmation and delivery in order tracking."}
                 </p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {t("emailSentTo")}:{" "}
-                  <span className="font-bold text-primary">{emailPopup.email}</span>
-                </p>
+                {emailPopup.emailSent && (
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {t("emailSentTo")}:{" "}
+                    <span className="font-bold text-primary">{emailPopup.email}</span>
+                  </p>
+                )}
 
                 {/* CTA button */}
                 <button
                   onClick={() => {
                     navigate({
-                      to: "/order-success/$orderNumber",
-                      params: { orderNumber: emailPopup.orderNumber },
+                      to: "/track-order",
+                      search: { orderNumber: emailPopup.orderNumber, phone: normalizePhone(phone) },
                     });
-                    setEmailPopup(null);
                   }}
                   className="mt-8 w-full rounded-2xl bg-primary py-4 text-base font-extrabold text-primary-foreground shadow-lg transition hover:bg-primary/90 active:scale-95"
                 >
@@ -533,8 +719,8 @@ function Field({
   autoComplete?: string;
 }) {
   return (
-    <div>
-      <label className="mb-1 block text-sm font-semibold">{label}</label>
+    <label className="block">
+      <span className="mb-1 block text-sm font-semibold">{label}</span>
       <input
         type={type}
         inputMode={inputMode}
@@ -546,6 +732,6 @@ function Field({
       />
       {helper && <p className="mt-1 text-xs text-muted-foreground">{helper}</p>}
       {error && <p className="mt-1 text-sm text-destructive">{error}</p>}
-    </div>
+    </label>
   );
 }

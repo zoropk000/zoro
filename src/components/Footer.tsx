@@ -1,174 +1,121 @@
 import { Link } from "@tanstack/react-router";
-import { Mail, Phone, Instagram, Facebook } from "lucide-react";
+import {
+  ArrowUpRight,
+  Instagram,
+  Facebook,
+  MessageCircle,
+  ShieldCheck,
+  Truck,
+  RefreshCw,
+  Headphones,
+} from "lucide-react";
 import { siteConfig } from "@/config/siteConfig";
-import { useLanguage } from "@/lib/language-context";
-
 export function Footer() {
-  const { t } = useLanguage();
-
   return (
-    <footer className="mt-16 border-t border-border bg-secondary/40 pb-24 pt-12 md:pb-12">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:grid-cols-2 md:grid-cols-4">
-        {/* Shop */}
-        <div>
-          <h4 className="mb-4 text-sm font-bold uppercase tracking-wider text-foreground">
-            {t("footerShop")}
-          </h4>
-          <ul className="space-y-3 text-sm text-muted-foreground">
-            <li>
-              <Link to="/men" className="transition-colors hover:text-primary">
-                {t("footerMen")}
-              </Link>
-            </li>
-            <li>
-              <Link to="/women" className="transition-colors hover:text-primary">
-                {t("footerWomen")}
-              </Link>
-            </li>
-            <li>
-              <Link to="/shop" className="transition-colors hover:text-primary">
-                {t("footerAllShoes")}
-              </Link>
-            </li>
-            <li>
-              <Link to="/sale" className="transition-colors hover:text-primary">
-                {t("footerSale")}
-              </Link>
-            </li>
-          </ul>
-        </div>
-
-        {/* Help */}
-        <div>
-          <h4 className="mb-4 text-sm font-bold uppercase tracking-wider text-foreground">
-            {t("footerHelp")}
-          </h4>
-          <ul className="space-y-3 text-sm text-muted-foreground">
-            <li>
-              <Link to="/size-guide" className="transition-colors hover:text-primary">
-                {t("footerSizeGuide")}
-              </Link>
-            </li>
-            <li>
-              <Link to="/track-order" className="transition-colors hover:text-primary">
-                {t("footerTrackOrder")}
-              </Link>
-            </li>
-            <li>
-              <Link to="/delivery" className="transition-colors hover:text-primary">
-                {t("footerDelivery")}
-              </Link>
-            </li>
-            <li>
-              <Link to="/returns" className="transition-colors hover:text-primary">
-                {t("footerReturns")}
-              </Link>
-            </li>
-            <li>
-              <Link to="/faq" className="transition-colors hover:text-primary">
-                {t("footerFAQ")}
-              </Link>
-            </li>
-          </ul>
-        </div>
-
-        {/* Company */}
-        <div>
-          <h4 className="mb-4 text-sm font-bold uppercase tracking-wider text-foreground">
-            {t("footerCompany")}
-          </h4>
-          <ul className="space-y-3 text-sm text-muted-foreground">
-            <li>
-              <Link to="/about" className="transition-colors hover:text-primary">
-                {t("footerAbout")}
-              </Link>
-            </li>
-            <li>
-              <Link to="/contact" className="transition-colors hover:text-primary">
-                {t("footerContact")}
-              </Link>
-            </li>
-            <li>
-              <Link to="/privacy" className="transition-colors hover:text-primary">
-                {t("footerPrivacy")}
-              </Link>
-            </li>
-            <li>
-              <Link to="/terms" className="transition-colors hover:text-primary">
-                {t("footerTerms")}
-              </Link>
-            </li>
-          </ul>
-        </div>
-
-        {/* Contact */}
-        <div>
-          <h4 className="mb-4 text-sm font-bold uppercase tracking-wider text-foreground">
-            {t("footerContact2")}
-          </h4>
-          <ul className="space-y-3 text-sm text-muted-foreground">
-            <li className="flex items-start gap-3">
-              <Phone className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-              <span>{siteConfig.phone}</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <Mail className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-              <span className="break-all">{siteConfig.email}</span>
-            </li>
-          </ul>
-
-          {/* Social Media */}
-          <div className="mt-5">
-            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-foreground">
-              {t("footerFollowUs")}
+    <footer className="store-footer">
+      <div className="footer-benefits store-container">
+        {[
+          { icon: Truck, title: "Across Pakistan", text: "Delivered to your doorstep" },
+          { icon: ShieldCheck, title: "Shop with confidence", text: "Cash on delivery available" },
+          { icon: RefreshCw, title: "Here to help", text: "Simple exchange support" },
+          { icon: Headphones, title: "A real conversation", text: "Support on WhatsApp" },
+        ].map(({ icon: Icon, title, text }) => (
+          <div key={title}>
+            <Icon size={25} strokeWidth={1.4} />
+            <span>
+              <strong>{title}</strong>
+              <small>{text}</small>
+            </span>
+          </div>
+        ))}
+      </div>
+      <div className="footer-main">
+        <div className="store-container footer-grid">
+          <div className="footer-brand">
+            <Link to="/" className="brand-wordmark">
+              ZORO<span>PK</span>
+            </Link>
+            <p>
+              Good style. Great finds.
+              <br />A little more you, every day.
             </p>
-            <div className="flex flex-wrap gap-2">
+            <div className="footer-social">
               <a
                 href={siteConfig.instagram}
                 target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Follow on Instagram"
-                className="group flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[#E1306C]/40 hover:shadow-md"
+                rel="noreferrer"
+                aria-label="ZORO Instagram"
               >
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#FEDA75] via-[#D62976] to-[#4F5BD5]">
-                  <Instagram className="h-4 w-4 text-white" />
-                </div>
-                <span className="text-xs font-semibold text-foreground group-hover:text-[#E1306C]">
-                  {t("instagram")}
-                </span>
+                <Instagram size={18} />
               </a>
-
               <a
                 href={siteConfig.facebook}
                 target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Follow on Facebook"
-                className="group flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[#1877F2]/40 hover:shadow-md"
+                rel="noreferrer"
+                aria-label="ZORO Facebook"
               >
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1877F2]">
-                  <Facebook className="h-4 w-4 fill-white text-white" />
-                </div>
-                <span className="text-xs font-semibold text-foreground group-hover:text-[#1877F2]">
-                  {t("facebook")}
-                </span>
+                <Facebook size={18} />
+              </a>
+              <a
+                href={`https://wa.me/${siteConfig.whatsapp}`}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="ZORO WhatsApp"
+              >
+                <MessageCircle size={18} />
               </a>
             </div>
           </div>
-
-          {/* Cash on Delivery badge */}
-          <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-success/20 bg-success/10 px-4 py-2 text-xs font-bold text-success">
-            <span className="text-base">💵</span>
-            {t("footerCOD")}
+          <div>
+            <h3>Explore ZORO</h3>
+            {["Clothing", "Shoes", "Perfumes", "Accessories"].map((c) => (
+              <a key={c} href={`/shop?category=${c.toLowerCase()}`}>
+                {c}
+              </a>
+            ))}
+            <a href="/shop?collection=new">New arrivals</a>
+            <Link to="/sale">The sale edit</Link>
+          </div>
+          <div>
+            <h3>Let us help</h3>
+            <Link to="/contact">Contact us</Link>
+            <Link to="/track-order">Track your order</Link>
+            <Link to="/delivery">Shipping & delivery</Link>
+            <Link to="/returns">Returns & exchanges</Link>
+            <Link to="/faq">FAQs</Link>
+            <Link to="/account">My account</Link>
+          </div>
+          <div className="footer-contact">
+            <h3>We’re just a message away.</h3>
+            <p>
+              Need a hand finding your favourite?
+              <br />
+              Our team is happy to help.
+            </p>
+            <a
+              href={`https://wa.me/${siteConfig.whatsapp}`}
+              target="_blank"
+              rel="noreferrer"
+              className="footer-whatsapp"
+            >
+              Let’s talk on WhatsApp <ArrowUpRight size={17} />
+            </a>
+            <a href={`mailto:${siteConfig.email}`}>{siteConfig.email}</a>
+            <a href={`tel:${siteConfig.phone.replace(/\s/g, "")}`}>{siteConfig.phone}</a>
+            <small>{siteConfig.address}</small>
           </div>
         </div>
-      </div>
-
-      {/* Bottom Footer */}
-      <div className="mx-auto mt-10 max-w-7xl border-t border-border px-4 pt-6 text-center text-xs text-muted-foreground">
-        <p className="font-medium">{t("footerBottomText")}</p>
-        <p className="mt-2">
-          © {new Date().getFullYear()} {siteConfig.brandName}. {t("footerCopyright")}
-        </p>
+        <div className="store-container footer-bottom">
+          <span>© {new Date().getFullYear()} ZORO. All rights reserved.</span>
+          <div>
+            <Link to="/privacy">Privacy policy</Link>
+            <Link to="/terms">Terms of service</Link>
+            <Link to="/about">Our story</Link>
+          </div>
+          <span className="payment-label">
+            CASH ON DELIVERY <i /> EASYPAISA <i /> BANK TRANSFER
+          </span>
+        </div>
       </div>
     </footer>
   );

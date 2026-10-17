@@ -25,6 +25,7 @@ const navItems = [
   { label: "Orders", to: "/admin/orders", icon: Package },
   { label: "Customers", to: "/admin/customers", icon: Users },
   { label: "Analytics", to: "/admin/analytics", icon: BarChart3 },
+  { label: "Storefront", to: "/admin/storefront", icon: Boxes },
   { label: "Settings", to: "/admin/settings", icon: Settings },
 ] as const;
 

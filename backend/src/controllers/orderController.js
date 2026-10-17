@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import jwt from "jsonwebtoken";
 import { Readable } from "stream";
 import { cloudinary } from "../config/cloudinary.js";
 import { Order } from "../models/Order.js";
@@ -7,6 +8,8 @@ import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { makeOrderNumber } from "../utils/orderNumber.js";
 import { sendOrderStatusEmail } from "../utils/email.js";
+import { couponDiscount } from "../models/StoreConfig.js";
+import { sessionCustomer } from "../routes/commerceRoutes.js";
 
 function normalizePhone(phone) {
   return String(phone || "")
@@ -20,12 +23,76 @@ function deliveryFeeFor(subtotal) {
   return subtotal >= freeThreshold ? 0 : fee;
 }
 
+function proofToken(order) {
+  return jwt.sign(
+    { id: order._id, orderNumber: order.orderNumber, purpose: "payment-proof" },
+    process.env.JWT_SECRET,
+    { audience: "zoro-payment-proof", expiresIn: "24h" },
+  );
+}
+export const authorizePaymentProof = (req, res, next) => {
+  try {
+    const token = String(req.get("authorization") || "").replace(/^Bearer /i, "");
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, { audience: "zoro-payment-proof" });
+    if (
+      decoded.purpose !== "payment-proof" ||
+      decoded.orderNumber !== String(req.params.orderNumber).toUpperCase()
+    )
+      throw new Error();
+    req.proofOrderId = decoded.id;
+    next();
+  } catch {
+    next(
+      new ApiError(
+        "Verify your order number and phone in order tracking before uploading a screenshot.",
+        401,
+      ),
+    );
+  }
+};
+function requireApprovedPayment(order, nextStatus) {
+  if (
+    order.paymentMethod !== "cod" &&
+    order.paymentStatus !== "paid" &&
+    ["confirmed", "preparing", "processing", "shipped", "out_for_delivery", "delivered"].includes(
+      nextStatus,
+    )
+  )
+    throw new ApiError(
+      "Review and approve the payment screenshot before confirming or shipping this prepaid order.",
+      409,
+    );
+}
+function respondWithOrder(res, order, emailSent = false) {
+  return res.status(201).json({
+    success: true,
+    order: {
+      orderNumber: order.orderNumber,
+      total: order.total,
+      paymentMethod: order.paymentMethod,
+      paymentProofToken: order.paymentMethod !== "cod" ? proofToken(order) : undefined,
+      hasPaymentProof: Boolean(order.paymentProof?.url),
+      emailSent,
+    },
+  });
+}
+
 async function recalculateProductStock(productId) {
-  const product = await Product.findById(productId);
-  if (!product) return;
-  product.totalStock = product.sizes.reduce((sum, row) => sum + Number(row.stock || 0), 0);
-  if (product.totalStock === 0) product.status = "out-of-stock";
-  await product.save();
+  // Calculate from current database values; concurrent reservations must not overwrite each other.
+  await Product.updateOne({ _id: productId }, [
+    { $set: { totalStock: { $sum: "$sizes.stock" } } },
+    {
+      $set: {
+        status: {
+          $cond: [
+            { $eq: ["$totalStock", 0] },
+            "out-of-stock",
+            { $cond: [{ $eq: ["$status", "out-of-stock"] }, "active", "$status"] },
+          ],
+        },
+      },
+    },
+  ]);
 }
 
 async function restoreInventory(order) {
@@ -46,6 +113,7 @@ async function reduceInventory(items) {
       const result = await Product.updateOne(
         {
           _id: item.product,
+          status: "active",
           sizes: { $elemMatch: { size: item.size, stock: { $gte: item.quantity } } },
         },
         { $inc: { "sizes.$.stock": -item.quantity } },
@@ -101,6 +169,26 @@ async function sendAndSaveEmailStatus(order, emailType) {
 
 export const createOrder = asyncHandler(async (req, res) => {
   const { customer, items, paymentMethod, notes } = req.body;
+  const checkoutKey =
+    typeof req.body.checkoutKey === "string" && /^[a-f0-9-]{36}$/i.test(req.body.checkoutKey)
+      ? req.body.checkoutKey
+      : undefined;
+  if (checkoutKey) {
+    const existing = await Order.findOne({ checkoutKey });
+    if (existing)
+      return respondWithOrder(res, existing, Boolean(existing.emailStatus?.orderReceived?.sent));
+  }
+  if (
+    !customer ||
+    ["name", "phone", "email", "city", "address"].some(
+      (key) => typeof customer[key] !== "string",
+    ) ||
+    customer.name.length > 100 ||
+    customer.email.length > 254 ||
+    customer.city.length > 100 ||
+    customer.address.length > 1000
+  )
+    throw new ApiError("Enter valid customer contact and delivery details.", 400);
   if (
     !customer?.name ||
     !customer?.phone ||
@@ -110,6 +198,12 @@ export const createOrder = asyncHandler(async (req, res) => {
   ) {
     throw new ApiError("Customer name, phone, email, city, and address are required", 400);
   }
+  if (
+    !/^\S+@\S+\.\S+$/.test(String(customer.email)) ||
+    !/^3\d{9}$/.test(normalizePhone(customer.phone))
+  )
+    throw new ApiError("Enter a valid email and Pakistani mobile number.", 400);
+  if (items?.length > 100) throw new ApiError("Too many order items.", 400);
   if (!Array.isArray(items) || items.length === 0)
     throw new ApiError("Order items are required", 400);
 
@@ -120,17 +214,22 @@ export const createOrder = asyncHandler(async (req, res) => {
     if (!product) throw new ApiError("Product not found", 404);
     const size = String(row.size);
     const quantity = Math.max(Number(row.quantity) || 0, 0);
-    if (quantity < 1) throw new ApiError("Quantity must be at least 1", 400);
+    if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > 100)
+      throw new ApiError("Quantity must be a whole number from 1 to 100", 400);
     const sizeRow = product.sizes.find((entry) => entry.size === size);
     if (!sizeRow) throw new ApiError(`Size ${size} is not available for ${product.name}`, 400);
     if (sizeRow.stock < quantity)
       throw new ApiError(`Insufficient stock for ${product.name} size ${size}`, 409);
+    const color = String(row.color || "");
+    if (color && !product.colors.includes(color))
+      throw new ApiError(`Choose an available colour for ${product.name}`, 400);
 
     mappedItems.push({
       product: product._id,
       name: product.name,
       image: product.images[0]?.url || "",
       size,
+      color,
       quantity,
       price: product.price,
       gender: product.gender,
@@ -147,39 +246,71 @@ export const createOrder = asyncHandler(async (req, res) => {
   const normalizedPayment = methodMap[paymentMethod] || "cod";
   const subtotal = mappedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const deliveryFee = deliveryFeeFor(subtotal);
+  let coupon;
+  try {
+    coupon = await couponDiscount(req.body.couponCode, subtotal);
+  } catch (error) {
+    throw new ApiError(error.message, 400);
+  }
+  const account = await sessionCustomer(req);
 
   await reduceInventory(mappedItems);
 
-  const order = await Order.create({
-    orderNumber: makeOrderNumber(),
-    customer: {
-      name: customer.name.trim(),
-      phone: normalizePhone(customer.phone),
-      email: customer.email.trim().toLowerCase(),
-      city: customer.city.trim(),
-      address: customer.address.trim(),
-      landmark: customer.landmark?.trim() || "",
-    },
-    items: mappedItems,
-    subtotal,
-    deliveryFee,
-    total: subtotal + deliveryFee,
-    paymentMethod: normalizedPayment,
-    paymentStatus: normalizedPayment === "cod" ? "pending" : "verification-needed",
-    notes: notes || "",
-    trackingEvents: [
-      {
-        status: "pending",
-        title: "Order Received",
-        titleUrdu: "آرڈر موصول ہو گیا",
-        description: "We received your order.",
-        descriptionUrdu: "ہمیں آپ کا آرڈر موصول ہو گیا ہے۔",
-        timestamp: new Date(),
+  let order;
+  try {
+    order = await Order.create({
+      orderNumber: makeOrderNumber(),
+      checkoutKey,
+      customerAccount: account?._id,
+      couponCode: coupon.code,
+      discount: coupon.discount,
+      customer: {
+        name: customer.name.trim(),
+        phone: normalizePhone(customer.phone),
+        email: customer.email.trim().toLowerCase(),
+        city: customer.city.trim(),
+        province: String(customer.province || "").trim(),
+        address: customer.address.trim(),
+        landmark: customer.landmark?.trim() || "",
       },
-    ],
-  });
+      items: mappedItems,
+      subtotal,
+      deliveryFee,
+      total: subtotal + deliveryFee - coupon.discount,
+      paymentMethod: normalizedPayment,
+      paymentStatus: normalizedPayment === "cod" ? "pending" : "verification-needed",
+      notes: notes || "",
+      trackingEvents: [
+        {
+          status: "pending",
+          title: "Order Received",
+          titleUrdu: "آرڈر موصول ہو گیا",
+          description: "We received your order.",
+          descriptionUrdu: "ہمیں آپ کا آرڈر موصول ہو گیا ہے۔",
+          timestamp: new Date(),
+        },
+      ],
+    });
+  } catch (error) {
+    // Restore stock when order persistence fails after inventory reservation.
+    for (const item of mappedItems) {
+      await Product.updateOne(
+        { _id: item.product, "sizes.size": item.size },
+        { $inc: { "sizes.$.stock": item.quantity } },
+      );
+      await recalculateProductStock(item.product);
+    }
+    if (checkoutKey && error.code === 11000 && error.keyPattern?.checkoutKey) {
+      const existing = await Order.findOne({ checkoutKey });
+      if (existing)
+        return respondWithOrder(res, existing, Boolean(existing.emailStatus?.orderReceived?.sent));
+    }
+    throw error;
+  }
 
-  await sendAndSaveEmailStatus(order, "orderReceived");
+  const emailResult = await sendAndSaveEmailStatus(order, "orderReceived").catch(() => ({
+    success: false,
+  }));
 
   res.status(201).json({
     success: true,
@@ -187,6 +318,8 @@ export const createOrder = asyncHandler(async (req, res) => {
       orderNumber: order.orderNumber,
       total: order.total,
       paymentMethod: order.paymentMethod,
+      paymentProofToken: normalizedPayment !== "cod" ? proofToken(order) : undefined,
+      emailSent: Boolean(emailResult.success),
     },
   });
 });
@@ -232,9 +365,20 @@ export const trackOrder = asyncHandler(async (req, res) => {
       items: order.items,
       subtotal: order.subtotal,
       deliveryFee: order.deliveryFee,
+      discount: order.discount || 0,
+      couponCode: order.couponCode || "",
       total: order.total,
       paymentMethod: order.paymentMethod,
       paymentStatus: order.paymentStatus,
+      hasPaymentProof: Boolean(order.paymentProof?.url),
+      paymentProofUploadedAt: order.paymentProof?.uploadedAt,
+      paymentReviewNote: order.paymentReview?.note || "",
+      paymentProofToken:
+        order.paymentMethod !== "cod" &&
+        order.paymentStatus !== "paid" &&
+        order.orderStatus !== "cancelled"
+          ? proofToken(order)
+          : undefined,
       orderStatus: order.orderStatus,
       deliveryEstimate: order.deliveryEstimate,
       trackingEvents: order.trackingEvents,
@@ -292,7 +436,12 @@ export const confirmOrder = asyncHandler(async (req, res) => {
   const minDays = Number(minDeliveryDays);
   const maxDays = Number(maxDeliveryDays);
 
-  if (isNaN(minDays) || isNaN(maxDays) || minDays <= 0 || maxDays <= 0) {
+  if (
+    !Number.isSafeInteger(minDays) ||
+    !Number.isSafeInteger(maxDays) ||
+    minDays <= 0 ||
+    maxDays > 120
+  ) {
     throw new ApiError("Minimum and maximum delivery days must be positive numbers", 400);
   }
   if (maxDays < minDays) {
@@ -301,6 +450,7 @@ export const confirmOrder = asyncHandler(async (req, res) => {
 
   const order = await Order.findById(id);
   if (!order) throw new ApiError("Order not found", 404);
+  requireApprovedPayment(order, "confirmed");
   if (order.orderStatus === "cancelled") {
     throw new ApiError("Cannot confirm a cancelled order", 400);
   }
@@ -374,6 +524,9 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
 
   const order = await Order.findById(id);
   if (!order) throw new ApiError("Order not found", 404);
+  requireApprovedPayment(order, status);
+  if (order.orderStatus === "cancelled" && status !== "cancelled")
+    throw new ApiError("Cancelled orders cannot be reopened. Create a new order instead.", 409);
 
   if (status === "confirmed" && order.orderStatus === "cancelled") {
     throw new ApiError("Cannot confirm a cancelled order", 400);
@@ -393,7 +546,12 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
       minDays = Number(minDeliveryDays);
       maxDays = Number(maxDeliveryDays);
 
-      if (isNaN(minDays) || isNaN(maxDays) || minDays <= 0 || maxDays <= 0) {
+      if (
+        !Number.isSafeInteger(minDays) ||
+        !Number.isSafeInteger(maxDays) ||
+        minDays <= 0 ||
+        maxDays > 120
+      ) {
         throw new ApiError("Minimum and maximum delivery days must be positive numbers", 400);
       }
       if (maxDays < minDays) {
@@ -435,16 +593,16 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
       descriptionUrdu: "آپ کے آرڈر کی تصدیق ہو گئی ہے۔",
     },
     preparing: {
-      title: "Shoes Being Prepared",
-      titleUrdu: "جوتے تیار کیے جا رہے ہیں",
-      description: "Your shoes are being prepared for shipping.",
-      descriptionUrdu: "آپ کے جوتے روانگی کے لیے تیار کیے جا رہے ہیں۔",
+      title: "Order Being Prepared",
+      titleUrdu: "آرڈر تیار کیا جا رہا ہے",
+      description: "Your order is being prepared for shipping.",
+      descriptionUrdu: "آپ کا آرڈر روانگی کے لیے تیار کیا جا رہا ہے۔",
     },
     processing: {
-      title: "Shoes Being Prepared",
-      titleUrdu: "جوتے تیار کیے جا رہے ہیں",
-      description: "Your shoes are being prepared for shipping.",
-      descriptionUrdu: "آپ کے جوتے روانگی کے لیے تیار کیے جا رہے ہیں۔",
+      title: "Order Being Prepared",
+      titleUrdu: "آرڈر تیار کیا جا رہا ہے",
+      description: "Your order is being prepared for shipping.",
+      descriptionUrdu: "آپ کا آرڈر روانگی کے لیے تیار کیا جا رہا ہے۔",
     },
     shipped: {
       title: "Shipped",
@@ -504,11 +662,58 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
 export const updatePaymentStatus = asyncHandler(async (req, res) => {
   const id = getOrderId(req);
   if (!mongoose.isValidObjectId(id)) throw new ApiError("Invalid order ID", 400);
-  const { status } = req.body;
+  const { status, note } = req.body;
   const allowed = ["pending", "paid", "verification-needed", "failed"];
   if (!allowed.includes(status)) throw new ApiError("Invalid payment status", 400);
-  const order = await Order.findByIdAndUpdate(id, { paymentStatus: status }, { new: true });
+  const order = await Order.findById(id);
   if (!order) throw new ApiError("Order not found", 404);
+  if (order.paymentMethod !== "cod" && status === "paid" && !order.paymentProof?.url)
+    throw new ApiError("A customer payment screenshot is required before approval.", 409);
+  if (order.paymentStatus === "paid" && order.paymentMethod !== "cod" && status !== "paid")
+    throw new ApiError("This payment has already been approved.", 409);
+  order.paymentStatus = status;
+  order.paymentReview = {
+    reviewedAt: new Date(),
+    reviewedBy: req.admin._id,
+    note: String(note || "")
+      .trim()
+      .slice(0, 500),
+  };
+  if (order.orderStatus === "cancelled") throw new ApiError("This order was cancelled.", 409);
+  let confirmed = false;
+  if (status === "paid" && req.body.confirmOrder && order.orderStatus === "pending") {
+    const minDays = Number(req.body.minDeliveryDays);
+    const maxDays = Number(req.body.maxDeliveryDays);
+    if (
+      !Number.isSafeInteger(minDays) ||
+      !Number.isSafeInteger(maxDays) ||
+      minDays < 1 ||
+      maxDays < minDays ||
+      maxDays > 120
+    )
+      throw new ApiError("Set a delivery estimate between 1 and 120 working days.", 400);
+    const now = new Date();
+    order.orderStatus = "confirmed";
+    order.confirmedAt = now;
+    order.trackingStartedAt = now;
+    order.deliveryEstimate = {
+      minDays,
+      maxDays,
+      estimatedStartDate: addWorkingDays(now, minDays),
+      estimatedEndDate: addWorkingDays(now, maxDays),
+    };
+    order.trackingEvents.push({
+      status: "confirmed",
+      title: "Payment Approved & Order Confirmed",
+      titleUrdu: "ادائیگی منظور اور آرڈر کی تصدیق ہو گئی",
+      description: `Your payment was approved. Delivery is estimated in ${minDays}–${maxDays} working days.`,
+      descriptionUrdu: "آپ کی ادائیگی منظور ہو گئی ہے اور آرڈر کی تصدیق کر دی گئی ہے۔",
+      timestamp: now,
+    });
+    confirmed = true;
+  }
+  await order.save();
+  if (confirmed) await sendAndSaveEmailStatus(order, "orderConfirmed").catch(() => null);
   res.json({ success: true, order });
 });
 
@@ -561,11 +766,29 @@ export const uploadPaymentProof = asyncHandler(async (req, res) => {
   const { orderNumber } = req.params;
   if (!orderNumber) throw new ApiError("Order number is required", 400);
 
-  const order = await Order.findOne({ orderNumber: orderNumber.toUpperCase() });
+  const order = await Order.findOne({
+    _id: req.proofOrderId,
+    orderNumber: orderNumber.toUpperCase(),
+  });
   if (!order) throw new ApiError("Order not found", 404);
+  if (order.paymentMethod === "cod")
+    throw new ApiError("Cash on delivery does not require a screenshot.", 400);
+  if (order.paymentStatus === "paid" || order.orderStatus === "cancelled")
+    throw new ApiError("This order is no longer accepting payment screenshots.", 409);
+  if (order.paymentProof?.url && order.paymentStatus === "verification-needed")
+    throw new ApiError(
+      "Your screenshot is already under review. Please wait for the admin’s response.",
+      409,
+    );
 
   const file = req.file;
   if (!file) throw new ApiError("Please upload an image file", 400);
+  const bytes = file.buffer;
+  const isImage =
+    bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])) ||
+    (bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255) ||
+    (bytes.toString("ascii", 0, 4) === "RIFF" && bytes.toString("ascii", 8, 12) === "WEBP");
+  if (!isImage) throw new ApiError("Upload a valid JPG, PNG or WEBP screenshot.", 400);
 
   // Upload to Cloudinary under a dedicated folder
   const uploadResult = await new Promise((resolve, reject) => {
@@ -573,7 +796,8 @@ export const uploadPaymentProof = asyncHandler(async (req, res) => {
       {
         folder: "zoro-pakistan/payment-proofs",
         resource_type: "image",
-        transformation: [{ quality: "auto", fetch_format: "auto" }],
+        type: "authenticated",
+        allowed_formats: ["jpg", "jpeg", "png", "webp"],
       },
       (error, result) => {
         if (error) reject(new ApiError("Image upload failed", 502, error.message));
@@ -583,18 +807,46 @@ export const uploadPaymentProof = asyncHandler(async (req, res) => {
     Readable.from(file.buffer).pipe(stream);
   });
 
-  order.paymentProof = {
-    url: uploadResult.secure_url,
+  const nextProof = {
+    url: cloudinary.url(uploadResult.public_id, {
+      type: "authenticated",
+      resource_type: "image",
+      secure: true,
+      sign_url: true,
+    }),
     publicId: uploadResult.public_id,
     uploadedAt: new Date(),
+    deliveryType: "authenticated",
   };
-  // Mark payment as needing verification
-  order.paymentStatus = "verification-needed";
-  await order.save();
+  const updated = await Order.findOneAndUpdate(
+    {
+      _id: order._id,
+      paymentStatus: order.paymentStatus,
+      "paymentProof.uploadedAt": order.paymentProof?.uploadedAt || null,
+    },
+    {
+      $set: {
+        paymentProof: nextProof,
+        paymentStatus: "verification-needed",
+        paymentReview: { note: "", reviewedAt: null },
+      },
+    },
+    { new: true },
+  );
+  if (!updated) {
+    await cloudinary.uploader
+      .destroy(uploadResult.public_id, { type: "authenticated" })
+      .catch(() => null);
+    throw new ApiError("The payment was updated while uploading. Refresh order tracking.", 409);
+  }
+  if (order.paymentProof?.publicId)
+    await cloudinary.uploader
+      .destroy(order.paymentProof.publicId, { type: order.paymentProof.deliveryType || "upload" })
+      .catch(() => null);
 
   res.json({
     success: true,
     message: "Payment proof uploaded successfully",
-    paymentProof: order.paymentProof,
+    uploadedAt: nextProof.uploadedAt,
   });
 });

@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Home, Search, ShoppingBag, ShoppingCart } from "lucide-react";
+import { Home, Heart, ShoppingBag, ShoppingCart, UserRound } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { useLanguage } from "@/lib/language-context";
 
@@ -19,9 +19,13 @@ export function MobileBottomNav() {
         <ShoppingBag className="h-5 w-5" />
         {t("navShop")}
       </Link>
-      <Link to="/shop" className={item}>
-        <Search className="h-5 w-5" />
-        {t("navSearch")}
+      <Link to="/wishlist" className={item} activeProps={active}>
+        <Heart className="h-5 w-5" />
+        Wishlist
+      </Link>
+      <Link to="/account" className={item} activeProps={active}>
+        <UserRound className="h-5 w-5" />
+        Account
       </Link>
       <Link to="/cart" className={item + " relative"} activeProps={active}>
         <div className="relative">

@@ -1,71 +1,106 @@
-import { Link } from "@tanstack/react-router";
-import { Star } from "lucide-react";
-import type { Product } from "@/services/productService";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { Heart, ArrowUpRight, Plus, Star } from "lucide-react";
+import { getDiscount, type Product } from "@/services/productService";
 import { formatPKR } from "@/lib/currency";
-import { getDiscount } from "@/services/productService";
+import { useCustomer } from "@/lib/customer-context";
+import { useCart } from "@/lib/cart-context";
 import { useLanguage } from "@/lib/language-context";
-
-const FALLBACK_IMAGE = "/logo.png";
-
 export function ProductCard({ product }: { product: Product }) {
   const discount = getDiscount(product);
-  const { t, lang } = useLanguage();
-
-  const displayDescription =
-    lang === "ur" && product.shortDescriptionUrdu
-      ? product.shortDescriptionUrdu
-      : product.shortDescription;
-
+  const { wishlist, toggleWishlist } = useCustomer();
+  const { addItem } = useCart();
+  const { lang } = useLanguage();
+  const navigate = useNavigate();
+  const available = product.sizes.filter((s) => s.stock > 0);
+  const quickAdd = () => {
+    if (available.length === 1 && product.colors.length <= 1)
+      addItem(product.id, available[0].size, 1, product.colors[0]);
+    else navigate({ to: "/product/$slug", params: { slug: product.slug } });
+  };
   return (
-    <Link
-      to="/product/$slug"
-      params={{ slug: product.slug }}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition hover:shadow-md"
-    >
-      <div className="relative aspect-square overflow-hidden bg-secondary">
-        <img
-          src={product.images[0] || FALLBACK_IMAGE}
-          alt={product.name}
-          loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-        />
-        {discount > 0 && (
-          <span className="absolute left-3 top-3 rounded-full bg-sale px-2.5 py-1 text-xs font-semibold text-sale-foreground">
-            {discount}% OFF
-          </span>
-        )}
-        {product.newArrival && (
-          <span className="absolute right-3 top-3 rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground">
-            {t("newLabel")}
-          </span>
-        )}
-      </div>
-      <div className="flex flex-1 flex-col gap-2 p-4">
-        <h3 className="line-clamp-2 text-base font-semibold text-foreground sm:text-lg">
-          {product.name}
-        </h3>
-        {displayDescription && (
-          <p className="line-clamp-2 text-xs text-muted-foreground">{displayDescription}</p>
-        )}
-        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-          <Star className="h-4 w-4 fill-accent text-accent" />
-          <span className="font-medium text-foreground">{product.rating}</span>
-          <span>({product.reviewCount})</span>
+    <article className="product-card">
+      <div className="product-card-image">
+        <Link
+          to="/product/$slug"
+          params={{ slug: product.slug }}
+          aria-label={`View ${product.name}`}
+        >
+          <img
+            src={product.images[0] || "/logo.png"}
+            alt={product.name}
+            loading="lazy"
+            decoding="async"
+            width="400"
+            height="500"
+          />
+          {product.images[1] && (
+            <img
+              className="product-second-image"
+              src={product.images[1]}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              width="400"
+              height="500"
+            />
+          )}
+        </Link>
+        <div className="product-badges">
+          {discount > 0 ? (
+            <span className="discount-badge">−{discount}%</span>
+          ) : product.newArrival ? (
+            <span>JUST IN</span>
+          ) : product.bestSeller ? (
+            <span>BESTSELLER</span>
+          ) : null}
         </div>
-        <div className="mt-1 flex flex-wrap items-baseline gap-2">
-          <span className="text-lg font-bold text-foreground">{formatPKR(product.price)}</span>
-          {product.oldPrice && (
-            <span className="text-sm text-muted-foreground line-through">
-              {formatPKR(product.oldPrice)}
+        <button
+          className={`wishlist-button ${wishlist.includes(product.id) ? "is-saved" : ""}`}
+          onClick={() => toggleWishlist(product.id)}
+          aria-label={`${wishlist.includes(product.id) ? "Remove" : "Save"} ${product.name} ${wishlist.includes(product.id) ? "from" : "to"} wishlist`}
+          aria-pressed={wishlist.includes(product.id)}
+        >
+          <Heart size={18} />
+        </button>
+        <button className="quick-add" onClick={quickAdd} disabled={product.totalStock <= 0}>
+          <span>
+            {product.totalStock <= 0
+              ? "Out of stock"
+              : available.length > 1 || product.colors.length > 1
+                ? "Choose options"
+                : "Add to bag"}
+          </span>
+          <Plus size={17} />
+        </button>
+      </div>
+      <div className="product-card-content">
+        <div className="product-meta">
+          <span>{product.brand || "ZORO"}</span>
+          {product.reviewCount > 0 && (
+            <span>
+              <Star size={11} fill="currentColor" /> {product.rating.toFixed(1)} (
+              {product.reviewCount})
             </span>
           )}
         </div>
-        <div className="mt-auto pt-3">
-          <span className="inline-flex w-full items-center justify-center rounded-lg bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground transition group-hover:bg-primary/90">
-            {t("viewAndBuy")}
-          </span>
+        <Link to="/product/$slug" params={{ slug: product.slug }} className="product-name">
+          {lang === "ur" && product.nameUrdu ? product.nameUrdu : product.name}
+        </Link>
+        <div className="product-prices">
+          <strong>{formatPKR(product.price)}</strong>
+          {discount > 0 && <del>{formatPKR(product.oldPrice!)}</del>}
+        </div>
+        <div className="product-card-bottom">
+          <span>{product.colors.slice(0, 3).join(" · ") || product.category}</span>
+          <Link
+            to="/product/$slug"
+            params={{ slug: product.slug }}
+            aria-label={`Shop ${product.name}`}
+          >
+            <ArrowUpRight size={15} />
+          </Link>
         </div>
       </div>
-    </Link>
+    </article>
   );
 }

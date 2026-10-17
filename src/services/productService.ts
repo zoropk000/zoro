@@ -16,7 +16,12 @@ export type Product = {
   slug: string;
   name: string;
   nameUrdu?: string;
-  gender: "men" | "women";
+  gender: "men" | "women" | "unisex";
+  category: string;
+  subcategory: string;
+  brand: string;
+  fragranceType: string;
+  bottleSize: string;
   price: number;
   oldPrice?: number;
   images: string[];
@@ -45,7 +50,15 @@ export type ProductFilters = {
   page?: number;
   limit?: number;
   slug?: string;
-  gender?: "men" | "women";
+  gender?: "men" | "women" | "unisex";
+  category?: string;
+  subcategory?: string;
+  brand?: string;
+  color?: string;
+  availability?: string;
+  rating?: number;
+  fragranceType?: string;
+  bottleSize?: string;
   featured?: boolean;
   bestSeller?: boolean;
   newArrival?: boolean;
@@ -93,13 +106,18 @@ export function mapProduct(product: BackendProduct): Product {
   const lowThreshold = 5;
   return {
     ...product,
+    category: product.category || "shoes",
+    subcategory: product.subcategory || "",
+    brand: product.brand || "",
+    fragranceType: product.fragranceType || "",
+    bottleSize: product.bottleSize || "",
     id: product._id,
     images: product.images?.map((image) => image.url).filter(Boolean) || [],
     imageObjects: product.images || [],
     description: splitLines(product.description),
     descriptionUrdu: splitLines(product.descriptionUrdu),
-    rating: 4.8,
-    reviewCount: 0,
+    rating: Number((product as unknown as Product).rating) || 0,
+    reviewCount: Number((product as unknown as Product).reviewCount) || 0,
     totalStock,
     stockStatus:
       product.status === "out-of-stock" || totalStock <= 0

@@ -68,6 +68,13 @@ function createTransporter() {
 /**
  * Generate a styled, responsive HTML email template
  */
+const escapeHtml = (value) =>
+  String(value ?? "").replace(
+    /[&<>"']/g,
+    (character) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character],
+  );
+
 export function buildEmailTemplate({ order, title, message, showDeliveryEstimate }) {
   const frontendUrl = (process.env.FRONTEND_URL || "http://localhost:5173").split(",")[0].trim();
   const trackingUrl = `${frontendUrl}/track-order?orderNumber=${order.orderNumber}&phone=${order.customer.phone}`;
@@ -83,7 +90,7 @@ export function buildEmailTemplate({ order, title, message, showDeliveryEstimate
             ${item.image ? `<td style="width: 50px; padding-right: 12px;"><img src="${item.image}" alt="${item.name}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;" /></td>` : ""}
             <td style="vertical-align: middle;">
               <div style="font-weight: 700; color: #1e293b; font-size: 14px;">${item.name}</div>
-              <div style="color: #64748b; font-size: 12px; margin-top: 2px;">Size: ${item.size} &bull; Qty: ${item.quantity}</div>
+              <div style="color: #64748b; font-size: 12px; margin-top: 2px;">Option: ${item.size}${item.color ? ` · ${item.color}` : ""} &bull; Qty: ${item.quantity}</div>
             </td>
           </tr>
         </table>
@@ -162,7 +169,7 @@ export function buildEmailTemplate({ order, title, message, showDeliveryEstimate
               <tr>
                 <td style="padding: 32px 24px;">
                   <div style="font-size: 20px; font-weight: 800; color: #0f172a; margin-bottom: 12px;">
-                    Assalamualaikum ${order.customer.name} 👋
+                    Assalamualaikum ${escapeHtml(order.customer.name)} 👋
                   </div>
                   <div style="font-size: 15px; color: #475569; line-height: 1.6; margin-bottom: 24px;">
                     ${message}
@@ -209,6 +216,7 @@ export function buildEmailTemplate({ order, title, message, showDeliveryEstimate
                       <td style="padding: 6px 0; color: #64748b;">Delivery Fee</td>
                       <td style="padding: 6px 0; text-align: right; font-weight: 700; color: #1e293b;">${order.deliveryFee === 0 ? "FREE" : formatPKR(order.deliveryFee)}</td>
                     </tr>
+                    ${order.discount ? `<tr><td style="padding: 6px 0; color: #64748b;">Discount (${order.couponCode})</td><td style="text-align: right;">−${formatPKR(order.discount)}</td></tr>` : ""}
                     <tr style="font-size: 18px; font-weight: 800;">
                       <td style="padding: 12px 0 0 0; color: #0f172a; border-top: 1px solid #e2e8f0;">Total Amount</td>
                       <td style="padding: 12px 0 0 0; text-align: right; color: #0f172a; border-top: 1px solid #e2e8f0;">${formatPKR(order.total)}</td>
@@ -221,10 +229,10 @@ export function buildEmailTemplate({ order, title, message, showDeliveryEstimate
                       <td style="vertical-align: top; width: 50%; padding-right: 12px;">
                         <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Delivery Details</div>
                         <div style="font-size: 13px; font-weight: 700; color: #1e293b; line-height: 1.5;">
-                          ${order.customer.name}<br />
+                          ${escapeHtml(order.customer.name)}<br />
                           ${order.customer.phone}<br />
-                          ${order.customer.address}, ${order.customer.city}
-                          ${order.customer.landmark ? `<br /><span style="font-style: italic; color: #64748b;">Landmark: ${order.customer.landmark}</span>` : ""}
+                          ${escapeHtml(order.customer.address)}, ${escapeHtml(order.customer.city)}
+                          ${order.customer.landmark ? `<br /><span style="font-style: italic; color: #64748b;">Landmark: ${escapeHtml(order.customer.landmark)}</span>` : ""}
                         </div>
                       </td>
                       <td style="vertical-align: top; width: 50%; padding-left: 12px; border-left: 1px solid #e2e8f0;">

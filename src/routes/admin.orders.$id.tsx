@@ -41,6 +41,8 @@ function AdminOrderDetails() {
   const [savingEstimate, setSavingEstimate] = useState(false);
   const [resendingType, setResendingType] = useState<string | null>(null);
   const [proofOpen, setProofOpen] = useState(false);
+  const [paymentSaving, setPaymentSaving] = useState(false);
+  const [reviewNote, setReviewNote] = useState("");
 
   const updateStatus = async (status: string) => {
     try {
@@ -57,7 +59,12 @@ function AdminOrderDetails() {
     const minVal = Number(minDays);
     const maxVal = Number(maxDays);
 
-    if (isNaN(minVal) || isNaN(maxVal) || minVal <= 0 || maxVal <= 0) {
+    if (
+      !Number.isSafeInteger(minVal) ||
+      !Number.isSafeInteger(maxVal) ||
+      minVal <= 0 ||
+      maxVal > 120
+    ) {
       toast.error("Please enter valid positive delivery day estimates.");
       return;
     }
@@ -95,7 +102,12 @@ function AdminOrderDetails() {
   // Preview calculations
   const minVal = Number(minDays);
   const maxVal = Number(maxDays);
-  const isEstimateValid = minVal > 0 && maxVal > 0 && maxVal >= minVal;
+  const isEstimateValid =
+    Number.isSafeInteger(minVal) &&
+    Number.isSafeInteger(maxVal) &&
+    minVal > 0 &&
+    maxVal <= 120 &&
+    maxVal >= minVal;
 
   let previewText = "";
   let datePreview = "";
@@ -138,7 +150,8 @@ function AdminOrderDetails() {
                     <div className="flex-1">
                       <div className="font-black">{item.name}</div>
                       <div className="text-sm text-slate-500">
-                        Size {item.size} - Qty {item.quantity}
+                        {item.size}
+                        {item.color ? ` · ${item.color}` : ""} - Qty {item.quantity}
                       </div>
                     </div>
                     <div className="font-black">{formatPKR(item.price * item.quantity)}</div>
@@ -179,6 +192,168 @@ function AdminOrderDetails() {
           </div>
 
           <div className="space-y-5">
+            <AdminCard>
+              <div className="mb-4 text-lg font-black">Payment</div>
+              <Info label="Method" value={data.paymentMethod.replace(/_/g, " ")} />
+              <div className="mb-3">
+                <StatusBadge value={data.paymentStatus} />
+              </div>
+              <Info label="Subtotal" value={formatPKR(data.subtotal)} />
+              <Info label="Delivery" value={formatPKR(data.deliveryFee)} />
+              {!!data.discount && (
+                <Info
+                  label={`Discount (${data.couponCode || "code"})`}
+                  value={`−${formatPKR(data.discount)}`}
+                />
+              )}
+              <Info label="Total" value={formatPKR(data.total)} strong />
+              {data.paymentMethod === "cod" && data.paymentStatus !== "paid" && (
+                <Button
+                  className="mt-4 w-full"
+                  disabled={paymentSaving || data.orderStatus !== "delivered"}
+                  onClick={async () => {
+                    setPaymentSaving(true);
+                    try {
+                      await adminApi.updatePaymentStatus(id, "paid");
+                      queryClient.invalidateQueries({ queryKey: ["admin-order", id] });
+                      toast.success("COD payment recorded");
+                    } catch (error) {
+                      toast.error(
+                        error instanceof Error ? error.message : "Could not record payment",
+                      );
+                    } finally {
+                      setPaymentSaving(false);
+                    }
+                  }}
+                >
+                  Mark COD payment collected
+                </Button>
+              )}
+
+              {/* Payment Proof Screenshot */}
+              {data.paymentProof?.url ? (
+                <div className="mt-4 border-t border-slate-100 pt-4">
+                  <div className="text-xs font-black uppercase text-slate-500 mb-2">
+                    Payment Proof Screenshot
+                  </div>
+                  <button
+                    aria-label="Enlarge payment screenshot"
+                    className="w-full cursor-zoom-in overflow-hidden rounded-xl border border-slate-200 bg-slate-50"
+                    onClick={() => setProofOpen(true)}
+                  >
+                    <img
+                      src={data.paymentProof.url}
+                      alt="Payment proof"
+                      className="w-full max-h-64 object-contain hover:opacity-90 transition-opacity"
+                    />
+                  </button>
+                  <p className="mt-1 text-xs text-slate-400">
+                    Uploaded: {new Date(data.paymentProof.uploadedAt).toLocaleString()}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500 font-medium">
+                    Click image to view full size
+                  </p>
+                  {data.paymentStatus !== "paid" && (
+                    <div className="space-y-3">
+                      <label className="mt-4 block text-xs font-semibold">
+                        Message to customer (optional)
+                        <textarea
+                          aria-label="Payment review message"
+                          maxLength={500}
+                          value={reviewNote}
+                          onChange={(e) => setReviewNote(e.target.value)}
+                          className="mt-2 w-full rounded-lg border border-border p-2 text-sm font-normal"
+                          placeholder="For example: please upload a clearer screenshot with the transaction reference."
+                        />
+                      </label>
+                      <Button
+                        className="mt-3 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                        onClick={async () => {
+                          setPaymentSaving(true);
+                          try {
+                            await adminApi.updatePaymentStatus(id, "paid", {
+                              note: reviewNote,
+                              confirmOrder: data.orderStatus === "pending",
+                              minDeliveryDays: minVal,
+                              maxDeliveryDays: maxVal,
+                            });
+                            toast.success("Payment approved and order confirmed");
+                            queryClient.invalidateQueries({ queryKey: ["admin-order", id] });
+                          } catch (error) {
+                            toast.error(
+                              error instanceof Error ? error.message : "Could not approve payment.",
+                            );
+                          } finally {
+                            setPaymentSaving(false);
+                          }
+                        }}
+                        disabled={
+                          paymentSaving || !isEstimateValid || data.orderStatus === "cancelled"
+                        }
+                      >
+                        {paymentSaving
+                          ? "Saving…"
+                          : data.orderStatus === "pending"
+                            ? "Approve payment & confirm order"
+                            : "Approve payment"}
+                      </Button>
+                      <p className="text-xs text-muted-foreground">
+                        Approval uses the delivery estimate below: {minDays}–{maxDays} working days.
+                        The customer can see approval and tracking immediately.
+                      </p>
+                      <Button
+                        variant="outline"
+                        className="w-full text-red-700"
+                        disabled={
+                          paymentSaving ||
+                          data.orderStatus === "cancelled" ||
+                          data.paymentStatus === "failed"
+                        }
+                        onClick={async () => {
+                          if (!reviewNote.trim()) {
+                            toast.error(
+                              "Add a message explaining what the customer should correct.",
+                            );
+                            return;
+                          }
+                          setPaymentSaving(true);
+                          try {
+                            await adminApi.updatePaymentStatus(id, "failed", { note: reviewNote });
+                            toast.success("Customer can now submit a new screenshot");
+                            queryClient.invalidateQueries({ queryKey: ["admin-order", id] });
+                          } catch (error) {
+                            toast.error(
+                              error instanceof Error ? error.message : "Could not update payment",
+                            );
+                          } finally {
+                            setPaymentSaving(false);
+                          }
+                        }}
+                      >
+                        Request a new screenshot
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ) : data.paymentMethod === "easypaisa_jazzcash" ||
+                data.paymentMethod === "meezan_bank" ? (
+                <div className="mt-4 border-t border-slate-100 pt-4">
+                  <div className="text-xs font-black uppercase text-slate-500 mb-1">
+                    Payment Proof
+                  </div>
+                  <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-700 font-semibold">
+                    ⚠️ No screenshot uploaded yet by customer.
+                  </div>
+                </div>
+              ) : null}
+              {data.paymentReview?.reviewedAt && (
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Reviewed {new Date(data.paymentReview.reviewedAt).toLocaleString()}
+                  {data.paymentReview.note ? ` · ${data.paymentReview.note}` : ""}
+                </p>
+              )}
+            </AdminCard>
+
             {/* Delivery Estimate section */}
             <AdminCard>
               <div className="flex items-center justify-between mb-4">
@@ -240,7 +415,11 @@ function AdminOrderDetails() {
                   <Button
                     type="submit"
                     className="w-full font-bold cursor-pointer"
-                    disabled={!isEstimateValid || savingEstimate}
+                    disabled={
+                      !isEstimateValid ||
+                      savingEstimate ||
+                      (data.paymentMethod !== "cod" && data.paymentStatus !== "paid")
+                    }
                   >
                     {savingEstimate
                       ? "Processing..."
@@ -292,6 +471,7 @@ function AdminOrderDetails() {
               <Info label="Phone" value={data.customer.phone} />
               <Info label="Email" value={data.customer.email || "-"} />
               <Info label="City" value={data.customer.city} />
+              {data.customer.province && <Info label="Province" value={data.customer.province} />}
               <Info label="Address" value={data.customer.address} />
               <Info label="Landmark" value={data.customer.landmark || "-"} />
             </AdminCard>
@@ -349,68 +529,6 @@ function AdminOrderDetails() {
             </AdminCard>
 
             <AdminCard>
-              <div className="mb-4 text-lg font-black">Payment</div>
-              <Info label="Method" value={data.paymentMethod.replace(/_/g, " ")} />
-              <div className="mb-3">
-                <StatusBadge value={data.paymentStatus} />
-              </div>
-              <Info label="Subtotal" value={formatPKR(data.subtotal)} />
-              <Info label="Delivery" value={formatPKR(data.deliveryFee)} />
-              <Info label="Total" value={formatPKR(data.total)} strong />
-
-              {/* Payment Proof Screenshot */}
-              {data.paymentProof?.url ? (
-                <div className="mt-4 border-t border-slate-100 pt-4">
-                  <div className="text-xs font-black uppercase text-slate-500 mb-2">
-                    Payment Proof Screenshot
-                  </div>
-                  <div
-                    className="cursor-zoom-in overflow-hidden rounded-xl border border-slate-200 bg-slate-50"
-                    onClick={() => setProofOpen(true)}
-                  >
-                    <img
-                      src={data.paymentProof.url}
-                      alt="Payment proof"
-                      className="w-full max-h-64 object-contain hover:opacity-90 transition-opacity"
-                    />
-                  </div>
-                  <p className="mt-1 text-xs text-slate-400">
-                    Uploaded: {new Date(data.paymentProof.uploadedAt).toLocaleString()}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500 font-medium">
-                    Click image to view full size
-                  </p>
-                  {data.paymentStatus !== "paid" && (
-                    <Button
-                      className="mt-3 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
-                      onClick={async () => {
-                        try {
-                          await adminApi.updatePaymentStatus(id, "paid");
-                          toast.success("Payment marked as verified ✅");
-                          queryClient.invalidateQueries({ queryKey: ["admin-order", id] });
-                        } catch {
-                          toast.error("Could not update payment status.");
-                        }
-                      }}
-                    >
-                      ✅ Mark Payment as Verified
-                    </Button>
-                  )}
-                </div>
-              ) : data.paymentMethod === "easypaisa_jazzcash" ||
-                data.paymentMethod === "meezan_bank" ? (
-                <div className="mt-4 border-t border-slate-100 pt-4">
-                  <div className="text-xs font-black uppercase text-slate-500 mb-1">
-                    Payment Proof
-                  </div>
-                  <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-700 font-semibold">
-                    ⚠️ No screenshot uploaded yet by customer.
-                  </div>
-                </div>
-              ) : null}
-            </AdminCard>
-
-            <AdminCard>
               <div className="mb-4 text-lg font-black">Order Actions</div>
               <div className="grid grid-cols-2 gap-2">
                 {[
@@ -426,9 +544,13 @@ function AdminOrderDetails() {
                     variant={status === "cancelled" ? "destructive" : "outline"}
                     onClick={() => updateStatus(status)}
                     disabled={
-                      data.orderStatus === "pending" &&
-                      status !== "confirmed" &&
-                      status !== "cancelled"
+                      (data.paymentMethod !== "cod" &&
+                        data.paymentStatus !== "paid" &&
+                        status !== "cancelled") ||
+                      data.orderStatus === "cancelled" ||
+                      (data.orderStatus === "pending" &&
+                        status !== "confirmed" &&
+                        status !== "cancelled")
                     }
                   >
                     {status === "preparing"

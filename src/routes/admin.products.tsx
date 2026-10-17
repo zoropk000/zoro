@@ -1,12 +1,13 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Edit, Eye, PackagePlus, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AdminCard, AdminLayout, StatusBadge } from "@/components/admin/AdminLayout";
 import { adminApi } from "@/services/adminService";
 import type { Product } from "@/services/productService";
 import { formatPKR } from "@/lib/currency";
+import { useStorefront, defaultCategories } from "@/services/storefrontService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -41,16 +42,24 @@ function AdminProducts() {
 function AdminProductsIndex() {
   const [search, setSearch] = useState("");
   const [gender, setGender] = useState("");
+  const [category, setCategory] = useState("");
+  const { data: storefront } = useStorefront();
   const [status, setStatus] = useState("");
   const [stock, setStock] = useState("");
+  const [page, setPage] = useState(1);
+  useEffect(() => {
+    setPage(1);
+  }, [search, gender, category, status, stock]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [stockProduct, setStockProduct] = useState<Product | null>(null);
   const [stockRows, setStockRows] = useState<{ size: string; stock: number }[]>([]);
   const [savingStock, setSavingStock] = useState(false);
   const queryClient = useQueryClient();
   const params = new URLSearchParams();
+  params.set("page", String(page));
   if (search) params.set("search", search);
   if (gender) params.set("gender", gender);
+  if (category) params.set("category", category);
   if (status) params.set("status", status);
   if (stock) params.set("stock", stock);
   const query = params.toString() ? `?${params}` : "";
@@ -113,7 +122,7 @@ function AdminProductsIndex() {
   return (
     <AdminLayout title="Products">
       <AdminCard>
-        <div className="grid gap-3 lg:grid-cols-[1fr_160px_160px_160px_auto]">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <Input
@@ -124,13 +133,30 @@ function AdminProductsIndex() {
             />
           </div>
           <select
+            aria-label="Filter products by department"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="h-10 rounded-md border border-input bg-background px-3"
+          >
+            <option value="">All departments</option>
+            {(storefront?.categories || defaultCategories)
+              .filter((c) => !c.parent)
+              .map((c) => (
+                <option key={c.slug} value={c.slug}>
+                  {c.name}
+                </option>
+              ))}
+          </select>
+          <select
+            aria-label="Filter products by gender"
             value={gender}
             onChange={(e) => setGender(e.target.value)}
             className="h-10 rounded-md border border-input bg-background px-3"
           >
-            <option value="">Men/Women</option>
+            <option value="">All audiences</option>
             <option value="men">Men</option>
             <option value="women">Women</option>
+            <option value="unisex">Unisex</option>
           </select>
           <select
             value={status}
@@ -166,6 +192,7 @@ function AdminProductsIndex() {
               <tr>
                 <th className="px-4 py-3">Product</th>
                 <th>Gender</th>
+                <th>Department</th>
                 <th>Price</th>
                 <th>Stock</th>
                 <th>Status</th>
@@ -190,6 +217,7 @@ function AdminProductsIndex() {
                     </div>
                   </td>
                   <td className="capitalize">{product.gender}</td>
+                  <td className="capitalize">{product.category}</td>
                   <td className="font-bold">{formatPKR(product.price)}</td>
                   <td>
                     <button
@@ -238,7 +266,7 @@ function AdminProductsIndex() {
               ))}
               {!products.isLoading && products.data?.products.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-slate-500">
+                  <td colSpan={8} className="px-4 py-12 text-center text-slate-500">
                     No products found.
                   </td>
                 </tr>
@@ -248,6 +276,31 @@ function AdminProductsIndex() {
         </div>
       </div>
 
+      {products.isError && (
+        <div className="collection-empty mt-5">
+          <p>Could not load products.</p>
+          <button className="text-link" onClick={() => products.refetch()}>
+            Try again
+          </button>
+        </div>
+      )}
+      {products.data && (
+        <div className="pagination">
+          <button disabled={page <= 1} onClick={() => setPage(page - 1)}>
+            Previous
+          </button>
+          <span>
+            {products.data.pagination.total} products · Page {page} of{" "}
+            {products.data.pagination.pages}
+          </span>
+          <button
+            disabled={page >= products.data.pagination.pages}
+            onClick={() => setPage(page + 1)}
+          >
+            Next
+          </button>
+        </div>
+      )}
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>

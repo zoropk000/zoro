@@ -11,7 +11,14 @@ const imageSchema = new mongoose.Schema(
 const sizeSchema = new mongoose.Schema(
   {
     size: { type: String, required: true, trim: true },
-    stock: { type: Number, required: true, min: 0, default: 0 },
+    stock: {
+      type: Number,
+      required: true,
+      min: 0,
+      max: 1000000000,
+      default: 0,
+      validate: { validator: Number.isSafeInteger, message: "Stock must be a whole number." },
+    },
   },
   { _id: false },
 );
@@ -26,7 +33,14 @@ const productSchema = new mongoose.Schema(
     },
     nameUrdu: { type: String, trim: true, maxlength: 180, default: "" },
     slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    gender: { type: String, required: true, enum: ["men", "women"] },
+    gender: { type: String, required: true, enum: ["men", "women", "unisex"] },
+    category: { type: String, default: "shoes", trim: true, index: true },
+    subcategory: { type: String, default: "", trim: true },
+    brand: { type: String, default: "", trim: true },
+    fragranceType: { type: String, default: "", trim: true },
+    bottleSize: { type: String, default: "", trim: true },
+    rating: { type: Number, min: 0, max: 5, default: 0 },
+    reviewCount: { type: Number, min: 0, default: 0 },
     description: { type: String, trim: true, default: "" },
     descriptionUrdu: { type: String, trim: true, default: "" },
     shortDescription: { type: String, trim: true, default: "" },

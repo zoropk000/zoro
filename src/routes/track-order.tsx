@@ -6,6 +6,8 @@ import { formatPKR } from "@/lib/currency";
 import { Check, Circle, Package } from "lucide-react";
 import { useLanguage } from "@/lib/language-context";
 import { z } from "zod";
+import { PaymentProofPanel } from "@/components/PaymentProofPanel";
+import { toast } from "sonner";
 
 const trackSearchSchema = z.object({
   orderNumber: z.string().optional(),
@@ -37,6 +39,22 @@ function TrackPage() {
   const [notFound, setNotFound] = useState(false);
   const [loading, setLoading] = useState(false);
   const { t, lang } = useLanguage();
+  useEffect(() => {
+    if (!order || ["cancelled", "delivered"].includes(order.orderStatus)) return;
+    let active = true;
+    const timer = setInterval(() => {
+      if (document.hidden) return;
+      trackOrder(order.orderNumber, phone)
+        .then((response) => {
+          if (active) setOrder(response.order);
+        })
+        .catch(() => {});
+    }, 30000);
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
+  }, [order?.orderNumber, order?.orderStatus, phone]);
 
   // Handle search params prefill & auto-track
   useEffect(() => {
@@ -152,6 +170,31 @@ function TrackPage() {
             <div className="flex items-center gap-2 text-lg font-bold text-right-RTL">
               <Package className="h-5 w-5 text-primary" />#{order.orderNumber}
             </div>
+            <button
+              className="text-link"
+              disabled={loading}
+              onClick={async () => {
+                setLoading(true);
+                try {
+                  const result = await trackOrder(order.orderNumber, phone);
+                  setOrder(result.order);
+                } catch {
+                  toast.error("Could not refresh your order. Please try again.");
+                } finally {
+                  setLoading(false);
+                }
+              }}
+            >
+              {lang === "ur" ? "صورتحال تازہ کریں" : "Refresh order status"}
+            </button>
+            <PaymentProofPanel
+              key={order.orderNumber}
+              order={order}
+              onUploaded={async () => {
+                const result = await trackOrder(order.orderNumber, phone);
+                setOrder(result.order);
+              }}
+            />
 
             <div className="text-sm text-muted-foreground text-right-RTL space-y-1">
               <div>

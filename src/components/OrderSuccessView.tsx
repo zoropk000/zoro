@@ -5,6 +5,7 @@ import { siteConfig } from "@/config/siteConfig";
 import { useLanguage } from "@/lib/language-context";
 import { useQuery } from "@tanstack/react-query";
 import { trackOrder } from "@/services/orderService";
+import { PaymentProofPanel } from "./PaymentProofPanel";
 
 type RecentOrder = {
   orderNumber?: string;
@@ -14,12 +15,18 @@ type RecentOrder = {
 export function OrderSuccessView({ orderNumber }: { orderNumber?: string }) {
   const { t, lang } = useLanguage();
 
-  const recentOrders =
-    typeof window !== "undefined" ? JSON.parse(localStorage.getItem("recentOrders") || "[]") : [];
+  let recentOrders: RecentOrder[] = [];
+  try {
+    const stored =
+      typeof window !== "undefined" ? JSON.parse(localStorage.getItem("recentOrders") || "[]") : [];
+    if (Array.isArray(stored)) recentOrders = stored;
+  } catch {
+    /* Tracking is still available when storage is unavailable. */
+  }
   const matched = recentOrders.find((o: RecentOrder) => o.orderNumber === orderNumber);
   const phone = matched?.phone || "";
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ["success-order", orderNumber, phone],
     queryFn: () => trackOrder(orderNumber || "", phone),
     enabled: !!orderNumber && !!phone,
@@ -119,6 +126,16 @@ export function OrderSuccessView({ orderNumber }: { orderNumber?: string }) {
           )}
         </div>
 
+        {order && (
+          <div className="mt-5">
+            <PaymentProofPanel
+              order={order}
+              onUploaded={async () => {
+                await refetch();
+              }}
+            />
+          </div>
+        )}
         <div className="mt-8 rounded-2xl bg-secondary p-6 text-left">
           <h3 className="mb-3 text-lg font-bold">{t("whatHappensNext")}</h3>
           <ol className="list-inside list-decimal space-y-2 text-sm">
@@ -132,6 +149,7 @@ export function OrderSuccessView({ orderNumber }: { orderNumber?: string }) {
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
           <Link
             to="/track-order"
+            search={{ orderNumber, phone: phone || undefined }}
             className="rounded-xl bg-primary px-5 py-3 text-base font-bold text-primary-foreground"
           >
             {t("trackMyOrder")}

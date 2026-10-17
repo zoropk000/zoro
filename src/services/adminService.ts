@@ -10,7 +10,12 @@ export type ProductPayload = {
   name: string;
   nameUrdu?: string;
   slug?: string;
-  gender: "men" | "women";
+  gender: "men" | "women" | "unisex";
+  category: string;
+  subcategory: string;
+  brand: string;
+  fragranceType: string;
+  bottleSize: string;
   description?: string;
   descriptionUrdu?: string;
   shortDescription?: string;
@@ -31,11 +36,14 @@ export type ProductPayload = {
 export type AdminOrder = {
   _id: string;
   orderNumber: string;
+  discount?: number;
+  couponCode?: string;
   customer: {
     name: string;
     phone: string;
     email?: string;
     city: string;
+    province?: string;
     address: string;
     landmark?: string;
   };
@@ -44,6 +52,7 @@ export type AdminOrder = {
     name: string;
     image: string;
     size: string;
+    color?: string;
     quantity: number;
     price: number;
     gender: "men" | "women";
@@ -58,6 +67,7 @@ export type AdminOrder = {
     publicId: string;
     uploadedAt: string;
   };
+  paymentReview?: { note: string; reviewedAt?: string };
   orderStatus: string;
   createdAt: string;
   confirmedAt?: string;
@@ -173,12 +183,21 @@ export const adminApi = {
       body: JSON.stringify({ status }),
     });
   },
-  updatePaymentStatus(id: string, status: string) {
+  updatePaymentStatus(
+    id: string,
+    status: string,
+    options?: {
+      note?: string;
+      confirmOrder?: boolean;
+      minDeliveryDays?: number;
+      maxDeliveryDays?: number;
+    },
+  ) {
     return apiRequest<{ success: true; order: AdminOrder }>(
       `/admin/orders/payment-status${idQuery(id)}`,
       {
         method: "PATCH",
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, ...options }),
       },
     );
   },

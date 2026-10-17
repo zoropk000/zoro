@@ -4,23 +4,38 @@ import { Product } from "../models/Product.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { slugify } from "../utils/slugify.js";
+import { getStoreConfig } from "../models/StoreConfig.js";
 
 function productResponse(product) {
   return product;
 }
 
-function buildProductQuery(query, publicOnly = true) {
+export function buildProductQuery(query, publicOnly = true) {
   const filter = {};
-  if (publicOnly) filter.status = "active";
+  if (publicOnly) filter.status = { $in: ["active", "out-of-stock"] };
 
   if (query.slug) filter.slug = slugify(query.slug);
-  if (query.gender) filter.gender = query.gender;
+  if (query.gender)
+    filter.gender =
+      query.gender === "unisex" ? "unisex" : { $in: [String(query.gender), "unisex"] };
+  if (query.category) {
+    if (query.category === "shoes")
+      filter.$and = [{ $or: [{ category: "shoes" }, { category: { $exists: false } }] }];
+    else filter.category = String(query.category);
+  }
+  if (query.subcategory) filter.subcategory = String(query.subcategory);
+  if (query.brand) filter.brand = String(query.brand);
+  if (query.color) filter.colors = String(query.color);
+  if (query.fragranceType) filter.fragranceType = String(query.fragranceType);
+  if (query.bottleSize) filter.sizes = { $elemMatch: { size: String(query.bottleSize) } };
+  if (query.availability === "in-stock") filter.totalStock = { $gt: 0 };
+  if (query.rating) filter.rating = { $gte: Math.min(5, Math.max(0, Number(query.rating) || 0)) };
   if (query.ids) {
     const ids = String(query.ids)
       .split(",")
       .map((id) => id.trim())
       .filter((id) => mongoose.isValidObjectId(id));
-    if (ids.length) filter._id = { $in: ids };
+    filter._id = { $in: ids };
   }
   ["featured", "bestSeller", "newArrival", "onSale"].forEach((key) => {
     if (query[key] !== undefined) filter[key] = query[key] === "true" || query[key] === true;
@@ -32,7 +47,9 @@ function buildProductQuery(query, publicOnly = true) {
     if (query.maxPrice) filter.price.$lte = Number(query.maxPrice);
   }
   if (query.size) {
-    filter.sizes = { $elemMatch: { size: String(query.size), stock: { $gt: 0 } } };
+    filter.sizes = {
+      $elemMatch: { size: { $in: String(query.size).split(",") }, stock: { $gt: 0 } },
+    };
   }
   if (query.search) {
     const regex = new RegExp(
@@ -47,6 +64,9 @@ function buildProductQuery(query, publicOnly = true) {
       { shortDescription: regex },
       { colors: regex },
       { sku: regex },
+      { brand: regex },
+      { category: regex },
+      { subcategory: regex },
     ];
   }
   return filter;
@@ -60,6 +80,7 @@ function buildSort(sort) {
   if (sort === "price-asc") return { price: 1 };
   if (sort === "price-desc") return { price: -1 };
   if (sort === "newest") return { createdAt: -1 };
+  if (sort === "discount") return { discountPercent: -1, createdAt: -1 };
   return { bestSeller: -1, featured: -1, createdAt: -1 };
 }
 
@@ -67,14 +88,33 @@ export const getProducts = asyncHandler(async (req, res) => {
   const page = Math.max(Number(req.query.page) || 1, 1);
   const limit = Math.min(Math.max(Number(req.query.limit) || 12, 1), 100);
   const filter = buildProductQuery(req.query, true);
-  const [products, total] = await Promise.all([
-    Product.find(filter)
-      .sort(buildSort(req.query.sort))
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .lean(),
-    Product.countDocuments(filter),
+  // Aggregation sorts discounts before pagination, so the result is accurate across the catalog.
+  if (filter._id) filter._id.$in = filter._id.$in.map((id) => new mongoose.Types.ObjectId(id));
+  const [result] = await Product.aggregate([
+    { $match: filter },
+    {
+      $addFields: {
+        discountPercent: {
+          $cond: [
+            { $gt: ["$oldPrice", "$price"] },
+            {
+              $multiply: [{ $divide: [{ $subtract: ["$oldPrice", "$price"] }, "$oldPrice"] }, 100],
+            },
+            0,
+          ],
+        },
+      },
+    },
+    { $sort: buildSort(req.query.sort) },
+    {
+      $facet: {
+        products: [{ $skip: (page - 1) * limit }, { $limit: limit }],
+        total: [{ $count: "count" }],
+      },
+    },
   ]);
+  const products = result.products;
+  const total = result.total[0]?.count || 0;
 
   res.json({
     success: true,
@@ -95,7 +135,10 @@ export const getProductsByGender = (gender) =>
   });
 
 export const getProductBySlug = asyncHandler(async (req, res) => {
-  const product = await Product.findOne({ slug: req.params.slug, status: "active" }).lean();
+  const product = await Product.findOne({
+    slug: req.params.slug,
+    status: { $in: ["active", "out-of-stock"] },
+  }).lean();
   if (!product) throw new ApiError("Product not found", 404);
   res.json({ success: true, product: productResponse(product) });
 });
@@ -140,6 +183,11 @@ function cleanPayload(body) {
     name: body.name,
     nameUrdu: body.nameUrdu || "",
     gender: body.gender,
+    category: body.category || "shoes",
+    subcategory: body.subcategory || "",
+    brand: String(body.brand || "").trim(),
+    fragranceType: String(body.fragranceType || "").trim(),
+    bottleSize: String(body.bottleSize || "").trim(),
     description: body.description || "",
     descriptionUrdu: body.descriptionUrdu || "",
     shortDescription: body.shortDescription || "",
@@ -170,6 +218,7 @@ function cleanPayload(body) {
 
 export const createProduct = asyncHandler(async (req, res) => {
   const payload = cleanPayload(req.body);
+  await validateCategory(payload);
   const product = await Product.create(payload);
   res.status(201).json({ success: true, product });
 });
@@ -182,6 +231,7 @@ export const updateProduct = asyncHandler(async (req, res) => {
 
   const oldPublicIds = new Set(existing.images.map((img) => img.publicId));
   const payload = cleanPayload(req.body);
+  await validateCategory(payload);
   Object.assign(existing, payload);
   await existing.save();
 
@@ -193,6 +243,19 @@ export const updateProduct = asyncHandler(async (req, res) => {
 
   res.json({ success: true, product: existing });
 });
+
+async function validateCategory(payload) {
+  const config = await getStoreConfig();
+  if (!config.categories.some((c) => c.slug === payload.category && !c.parent))
+    throw new ApiError("Choose an existing department.", 400);
+  if (
+    payload.subcategory &&
+    !config.categories.some((c) => c.slug === payload.subcategory && c.parent === payload.category)
+  )
+    throw new ApiError("Choose a subcategory in this department.", 400);
+  if (payload.brand && !config.brands.includes(payload.brand))
+    throw new ApiError("Add this brand in Storefront settings first.", 400);
+}
 
 export const deleteProduct = asyncHandler(async (req, res) => {
   const id = getProductId(req);

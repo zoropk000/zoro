@@ -13,6 +13,7 @@ import { Toaster } from "sonner";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { CartProvider } from "@/lib/cart-context";
+import { CustomerProvider } from "@/lib/customer-context";
 import { LanguageProvider, useLanguage } from "@/lib/language-context";
 
 function NotFoundComponent() {
@@ -42,7 +43,7 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error, reset }: { error: unknown; reset: () => void }) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
@@ -83,17 +84,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "ZORO - Comfortable Shoes, Cash on Delivery" },
+      { title: "ZORO — Everyday, elevated. | Shop Pakistan" },
       {
         name: "description",
         content:
-          "Buy quality shoes online in Pakistan. Cash on Delivery, easy size exchange, delivery all over Pakistan.",
+          "Discover clothing, shoes, perfumes and accessories at ZORO. Shop your everyday favourites with cash on delivery across Pakistan.",
       },
-      { property: "og:title", content: "ZORO - Shoes with Cash on Delivery" },
+      { property: "og:title", content: "ZORO — Everyday, elevated." },
       {
         property: "og:description",
         content:
-          "Comfortable shoes delivered anywhere in Pakistan. Pay cash when your order arrives.",
+          "Clothing, shoes, perfumes and accessories, delivered across Pakistan. Pay cash on delivery.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -110,7 +111,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700;750;800&family=Noto+Nastaliq+Urdu:wght@400;600&display=swap",
       },
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/logo.png", type: "image/x-icon" },
@@ -151,8 +152,10 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
         <CartProvider>
-          <Outlet />
-          <Toaster position="top-center" richColors />
+          <CustomerProvider>
+            <Outlet />
+            <Toaster position="top-center" richColors />
+          </CustomerProvider>
         </CartProvider>
       </LanguageProvider>
     </QueryClientProvider>
