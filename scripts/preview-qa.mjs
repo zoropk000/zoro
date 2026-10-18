@@ -7,6 +7,7 @@ import { Writable } from "node:stream";
 const backendRequire = createRequire(new URL("../backend/package.json", import.meta.url));
 const mongoose = backendRequire("mongoose");
 process.env.NODE_ENV = "development";
+process.env.EMAIL_ENABLED = "false";
 process.env.JWT_SECRET = randomBytes(32).toString("hex");
 process.env.GMAIL_USER = "";
 process.env.GMAIL_APP_PASSWORD = "";

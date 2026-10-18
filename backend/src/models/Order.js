@@ -14,6 +14,16 @@ const orderItemSchema = new mongoose.Schema(
   { _id: false },
 );
 
+const emailDeliverySchema = new mongoose.Schema(
+  {
+    sent: { type: Boolean, default: false },
+    sentAt: { type: Date, default: null },
+    messageId: { type: String, default: null },
+    error: { type: String, default: null },
+  },
+  { _id: false },
+);
+
 const orderSchema = new mongoose.Schema(
   {
     orderNumber: { type: String, required: true, unique: true, index: true },
@@ -91,31 +101,12 @@ const orderSchema = new mongoose.Schema(
     ],
     whatsappConfirmationSent: { type: Boolean, default: false },
     emailStatus: {
-      orderReceived: {
-        sent: { type: Boolean, default: false },
-        sentAt: { type: Date, default: null },
-        error: { type: String, default: null },
-      },
-      orderConfirmed: {
-        sent: { type: Boolean, default: false },
-        sentAt: { type: Date, default: null },
-        error: { type: String, default: null },
-      },
-      shipped: {
-        sent: { type: Boolean, default: false },
-        sentAt: { type: Date, default: null },
-        error: { type: String, default: null },
-      },
-      out_for_delivery: {
-        sent: { type: Boolean, default: false },
-        sentAt: { type: Date, default: null },
-        error: { type: String, default: null },
-      },
-      delivered: {
-        sent: { type: Boolean, default: false },
-        sentAt: { type: Date, default: null },
-        error: { type: String, default: null },
-      },
+      orderReceived: { type: emailDeliverySchema, default: () => ({}) },
+      orderConfirmed: { type: emailDeliverySchema, default: () => ({}) },
+      shipped: { type: emailDeliverySchema, default: () => ({}) },
+      out_for_delivery: { type: emailDeliverySchema, default: () => ({}) },
+      delivered: { type: emailDeliverySchema, default: () => ({}) },
+      adminOrderReceived: { type: emailDeliverySchema, default: () => ({}) },
     },
   },
   { timestamps: true },

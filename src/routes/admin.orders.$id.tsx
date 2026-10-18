@@ -478,9 +478,14 @@ function AdminOrderDetails() {
 
             {/* Email status checklist */}
             <AdminCard>
-              <div className="mb-4 text-lg font-black">📧 Customer Emails</div>
+              <div className="mb-2 text-lg font-black">📧 Order Emails</div>
+              <p className="mb-4 text-xs text-slate-500">
+                Accepted means the mail server accepted the message. Inbox placement is checked in
+                the recipient's mailbox.
+              </p>
               <div className="space-y-4">
                 {[
+                  { type: "adminOrderReceived", label: "Admin New Order Email" },
                   { type: "orderReceived", label: "Order Received Email" },
                   { type: "orderConfirmed", label: "Order Confirmation Email" },
                   { type: "shipped", label: "Shipped Email" },
@@ -496,7 +501,7 @@ function AdminOrderDetails() {
                       <div className="text-sm">
                         <div className="font-bold flex items-center gap-1.5">
                           {email?.sent ? (
-                            <span className="text-emerald-600">✅ {label}</span>
+                            <span className="text-emerald-600">✅ {label} (Accepted)</span>
                           ) : email?.error ? (
                             <span className="text-destructive">❌ {label} (Failed)</span>
                           ) : (
@@ -511,6 +516,11 @@ function AdminOrderDetails() {
                         {email?.error && (
                           <div className="text-xs text-destructive mt-0.5 max-w-[180px] break-words">
                             Error: {email.error}
+                          </div>
+                        )}
+                        {email?.messageId && (
+                          <div className="mt-0.5 max-w-[180px] break-all text-xs text-slate-500">
+                            Message ID: {email.messageId}
                           </div>
                         )}
                       </div>

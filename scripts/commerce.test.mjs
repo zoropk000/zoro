@@ -14,6 +14,7 @@ const { MongoMemoryServer } = mongoPackage
   ? await import(pathToFileURL(mongoPackage).href)
   : await import("mongodb-memory-server-core");
 process.env.NODE_ENV = "test";
+process.env.EMAIL_ENABLED = "false";
 process.env.JWT_SECRET = randomBytes(32).toString("hex");
 process.env.GMAIL_USER = "";
 process.env.GMAIL_APP_PASSWORD = "";
@@ -594,4 +595,34 @@ test("retrying the same checkout does not create a second order or reduce stock 
   assert.equal(first.json.order.orderNumber, retry.json.order.orderNumber);
   assert.equal(await Order.countDocuments(), count + 1);
   assert.equal((await Product.findById(shirt._id)).totalStock, stock);
+});
+
+test("customer and admin email failures are retained independently without failing checkout", async () => {
+  const order = await Order.findOne().sort({ createdAt: -1 });
+  assert.ok(order);
+  for (const type of ["orderReceived", "adminOrderReceived"]) {
+    assert.equal(order.emailStatus[type].sent, false);
+    assert.equal(order.emailStatus[type].sentAt, null);
+    assert.equal(order.emailStatus[type].messageId, null);
+    assert.match(order.emailStatus[type].error, /disabled or not configured/);
+  }
+  assert.equal(
+    (
+      await request(`/admin/orders/${order._id}/resend-email`, {
+        method: "POST",
+        body: { emailType: "adminOrderReceived" },
+      })
+    ).status,
+    401,
+  );
+  assert.equal(
+    (
+      await request(`/admin/orders/${order._id}/resend-email`, {
+        method: "POST",
+        cookie: adminCookie,
+        body: { emailType: "arbitrary-recipient" },
+      })
+    ).status,
+    400,
+  );
 });

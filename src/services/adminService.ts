@@ -87,11 +87,42 @@ export type AdminOrder = {
     timestamp: string;
   }[];
   emailStatus?: {
-    orderReceived: { sent: boolean; sentAt: string | null; error: string | null };
-    orderConfirmed: { sent: boolean; sentAt: string | null; error: string | null };
-    shipped: { sent: boolean; sentAt: string | null; error: string | null };
-    out_for_delivery: { sent: boolean; sentAt: string | null; error: string | null };
-    delivered: { sent: boolean; sentAt: string | null; error: string | null };
+    orderReceived: {
+      sent: boolean;
+      sentAt: string | null;
+      error: string | null;
+      messageId?: string | null;
+    };
+    orderConfirmed: {
+      sent: boolean;
+      sentAt: string | null;
+      error: string | null;
+      messageId?: string | null;
+    };
+    shipped: {
+      sent: boolean;
+      sentAt: string | null;
+      error: string | null;
+      messageId?: string | null;
+    };
+    out_for_delivery: {
+      sent: boolean;
+      sentAt: string | null;
+      error: string | null;
+      messageId?: string | null;
+    };
+    delivered: {
+      sent: boolean;
+      sentAt: string | null;
+      error: string | null;
+      messageId?: string | null;
+    };
+    adminOrderReceived?: {
+      sent: boolean;
+      sentAt: string | null;
+      error: string | null;
+      messageId?: string | null;
+    };
   };
 };
 

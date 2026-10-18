@@ -7,7 +7,7 @@ import { Product } from "../models/Product.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { makeOrderNumber } from "../utils/orderNumber.js";
-import { sendOrderStatusEmail } from "../utils/email.js";
+import { sendAdminOrderEmail, sendOrderStatusEmail } from "../utils/email.js";
 import { couponDiscount } from "../models/StoreConfig.js";
 import { sessionCustomer } from "../routes/commerceRoutes.js";
 
@@ -141,21 +141,27 @@ function getOrderId(req) {
 }
 
 async function saveEmailStatus(orderId, emailType, emailRes) {
-  const order = await Order.findById(orderId);
-  if (!order) return;
-
-  order.emailStatus[emailType] = {
-    sent: emailRes.success,
-    sentAt: emailRes.success ? new Date() : null,
-    error: emailRes.success ? null : emailRes.error || "Failed to send email",
-  };
-
-  await order.save();
+  await Order.updateOne(
+    { _id: orderId },
+    {
+      $set: {
+        [`emailStatus.${emailType}`]: {
+          sent: emailRes.success,
+          sentAt: emailRes.success ? new Date() : null,
+          messageId: emailRes.messageId || null,
+          error: emailRes.success ? null : emailRes.error || "Failed to send email",
+        },
+      },
+    },
+  );
 }
 
 async function sendAndSaveEmailStatus(order, emailType) {
   try {
-    const emailRes = await sendOrderStatusEmail(order, emailType);
+    const emailRes =
+      emailType === "adminOrderReceived"
+        ? await sendAdminOrderEmail(order)
+        : await sendOrderStatusEmail(order, emailType);
     await saveEmailStatus(order._id, emailType, emailRes);
     return emailRes;
   } catch (error) {
@@ -308,9 +314,10 @@ export const createOrder = asyncHandler(async (req, res) => {
     throw error;
   }
 
-  const emailResult = await sendAndSaveEmailStatus(order, "orderReceived").catch(() => ({
-    success: false,
-  }));
+  const [emailResult] = await Promise.all([
+    sendAndSaveEmailStatus(order, "orderReceived").catch(() => ({ success: false })),
+    sendAndSaveEmailStatus(order, "adminOrderReceived").catch(() => ({ success: false })),
+  ]);
 
   res.status(201).json({
     success: true,
@@ -723,6 +730,7 @@ export const resendEmail = asyncHandler(async (req, res) => {
   const { emailType } = req.body;
 
   const allowedTypes = [
+    "adminOrderReceived",
     "orderReceived",
     "orderConfirmed",
     "shipped",
@@ -736,15 +744,7 @@ export const resendEmail = asyncHandler(async (req, res) => {
   const order = await Order.findById(id);
   if (!order) throw new ApiError("Order not found", 404);
 
-  const emailRes = await sendOrderStatusEmail(order, emailType);
-
-  order.emailStatus[emailType] = {
-    sent: emailRes.success,
-    sentAt: emailRes.success ? new Date() : null,
-    error: emailRes.success ? null : emailRes.error,
-  };
-
-  await order.save();
+  const emailRes = await sendAndSaveEmailStatus(order, emailType);
 
   if (!emailRes.success) {
     throw new ApiError(`Email failed: ${emailRes.error}`, 500);
@@ -753,7 +753,7 @@ export const resendEmail = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     message: `Email '${emailType}' resent successfully`,
-    order,
+    order: await Order.findById(id),
   });
 });
 
